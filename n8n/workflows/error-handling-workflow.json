@@ -79,7 +79,7 @@
           "parameters": [
             {
               "name": "text",
-              "⚠️ WARNING: {{ $json.agent }} encountered issue for {{ $json.postId }}\n\nError: {{ $json.error }}\n\nTime: {{ $json.timestamp }}"
+              "value": "⚠️ WARNING: {{ $json.agent }} encountered issue for {{ $json.postId }}\n\nError: {{ $json.error }}\n\nTime: {{ $json.timestamp }}"
             }
           ]
         },
