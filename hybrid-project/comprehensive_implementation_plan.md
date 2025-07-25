@@ -377,6 +377,7 @@ Enable the system to handle multiple websites and brands.
 - Phase 8: ⏳ QA & Testing
 - Phase 9: ⏳ Production Deployment
 - Phase 10: ⏳ Multi-Site Scalability
+- Phase 11: ⏳ Social Agent Implementation (Disabled for now)
 
 ---
 
@@ -426,11 +427,10 @@ Enable the system to handle multiple websites and brands.
    - Test publishing workflow against actual capabilities
    - Ensure API compatibility and authentication
 
-6. **Social Agent Instructions Audit**
-   - Review `agents/social/instructions.md` against `utils/notificationService.js`
-   - Verify social media and notification tools
-   - Test social workflow against actual capabilities
-   - Identify any missing social media utilities
+6. **Social Agent Instructions Audit** (DISABLED FOR NOW)
+   - Review `agents/social/instructions.md` - Currently disabled, will be implemented later
+   - Social posts are handled by Publishing Agent as placeholders in blog frontmatter
+   - Will be implemented when social media automation is prioritized
 
 #### **📊 Audit Deliverables:**
 - **Instruction-Utility Compatibility Matrix** - Shows which instructions work with which utilities
