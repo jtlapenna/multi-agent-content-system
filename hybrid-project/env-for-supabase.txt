@@ -1,0 +1,13 @@
+# .env.local (for local development)
+NEXT_PUBLIC_SUPABASE_URL=https://your-supabase-project-url.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+
+# Optional: Supabase service role key (for secure server-side access if needed)
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+
+# Other project-specific variables
+NEXT_PUBLIC_SITE_NAME=BrightGift
+NEXT_PUBLIC_ENV=development
+
+# Deployment setup (Cloudflare Pages or Vercel may vary)
+# For Cloudflare Pages, set the above keys in the Dashboard UI under Project > Settings > Environment Variables

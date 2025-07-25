@@ -1,0 +1,2 @@
+# This file ensures the blog-posts directory is tracked in git
+# Blog posts will be created in subdirectories like: YYYY-MM-DD-topic-slug/ 

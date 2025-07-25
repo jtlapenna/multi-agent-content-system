@@ -1,0 +1,332 @@
+.post-detail {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.post-detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid #e9ecef;
+  background: #f8f9fa;
+}
+
+.post-detail-header h2 {
+  margin: 0;
+  color: #2c3e50;
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #6c757d;
+  cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+
+.close-btn:hover {
+  background: #e9ecef;
+  color: #495057;
+}
+
+.no-post-selected {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #6c757d;
+  font-style: italic;
+}
+
+.post-content {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.post-title-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #e9ecef;
+}
+
+.post-title-section h1 {
+  margin: 0;
+  color: #2c3e50;
+  font-size: 1.8rem;
+  font-weight: 700;
+  line-height: 1.2;
+  flex: 1;
+  margin-right: 15px;
+}
+
+.post-status.pending {
+  background: #fff3cd;
+  color: #856404;
+  padding: 6px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.post-meta-info {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+  margin-bottom: 25px;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 6px;
+}
+
+.meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.meta-label {
+  font-size: 12px;
+  color: #6c757d;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.meta-value {
+  font-size: 14px;
+  color: #2c3e50;
+  font-weight: 500;
+}
+
+.meta-value.seo-score {
+  color: #28a745;
+}
+
+.post-description, .post-full-content, .post-seo-data {
+  margin-bottom: 25px;
+}
+
+.post-description h3, .post-full-content h3, .post-seo-data h3 {
+  color: #2c3e50;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 10px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.post-description p {
+  color: #495057;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.content-preview {
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 6px;
+  border: 1px solid #e9ecef;
+  max-height: 300px;
+  overflow-y: auto;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #495057;
+}
+
+.seo-grid {
+  display: grid;
+  gap: 15px;
+}
+
+.seo-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.seo-label {
+  font-size: 12px;
+  color: #6c757d;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.seo-value {
+  font-size: 14px;
+  color: #2c3e50;
+  font-weight: 500;
+  word-break: break-word;
+}
+
+.post-actions-section {
+  padding: 20px;
+  border-top: 1px solid #e9ecef;
+  background: #f8f9fa;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 15px;
+}
+
+.btn-approve-large, .btn-reject-large {
+  flex: 1;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.btn-approve-large {
+  background: #28a745;
+  color: white;
+}
+
+.btn-approve-large:hover:not(:disabled) {
+  background: #218838;
+}
+
+.btn-reject-large {
+  background: #dc3545;
+  color: white;
+}
+
+.btn-reject-large:hover:not(:disabled) {
+  background: #c82333;
+}
+
+.btn-approve-large:disabled, .btn-reject-large:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.rejection-form {
+  background: white;
+  padding: 20px;
+  border-radius: 6px;
+  border: 1px solid #e9ecef;
+}
+
+.rejection-form h3 {
+  margin: 0 0 15px 0;
+  color: #2c3e50;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.rejection-textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  font-size: 14px;
+  line-height: 1.5;
+  resize: vertical;
+  margin-bottom: 15px;
+  font-family: inherit;
+}
+
+.rejection-textarea:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.rejection-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-confirm-reject, .btn-cancel {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.btn-confirm-reject {
+  background: #dc3545;
+  color: white;
+  flex: 1;
+}
+
+.btn-confirm-reject:hover:not(:disabled) {
+  background: #c82333;
+}
+
+.btn-cancel {
+  background: #6c757d;
+  color: white;
+}
+
+.btn-cancel:hover:not(:disabled) {
+  background: #5a6268;
+}
+
+.btn-confirm-reject:disabled, .btn-cancel:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .post-detail-header {
+    padding: 15px;
+  }
+  
+  .post-content {
+    padding: 15px;
+  }
+  
+  .post-title-section {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .post-title-section h1 {
+    font-size: 1.5rem;
+    margin-right: 0;
+  }
+  
+  .post-meta-info {
+    grid-template-columns: 1fr;
+  }
+  
+  .action-buttons {
+    flex-direction: column;
+  }
+  
+  .rejection-actions {
+    flex-direction: column;
+  }
+} 

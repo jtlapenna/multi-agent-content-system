@@ -1,0 +1,12 @@
+Workflow Task,Handled By
+Run SEO Research,Cursor Agent
+Generate Blog Draft,Cursor Agent
+Review + Optimize Blog,Cursor Agent
+Generate Images,Cursor Agent
+Push to Preview Branch,Cursor Agent
+Merge to Main Branch,Cursor Agent
+Trigger Next Agent,Cursor Agent (via Slack)
+Send Notifications,n8n
+Update Dashboard State,n8n
+Store Workflow Logs,n8n
+Trigger on Schedule,n8n

@@ -1,0 +1,32 @@
+{
+  "name": "approval-hub",
+  "version": "1.0.0",
+  "description": "Content approval interface for BrightGift blog automation",
+  "main": "index.js",
+  "scripts": {
+    "dev": "node dev-server.js",
+    "dev:cloudflare": "wrangler pages dev --compatibility-date=2024-01-01",
+    "build": "cd frontend && npm run build",
+    "deploy": "wrangler pages deploy approval-hub",
+    "deploy:staging": "wrangler pages deploy approval-hub --env staging",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "content-approval",
+    "blog-automation",
+    "cloudflare-pages",
+    "github-api"
+  ],
+  "author": "BrightGift Team",
+  "license": "MIT",
+  "devDependencies": {
+    "wrangler": "^3.0.0"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "cors": "^2.8.5"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+} 

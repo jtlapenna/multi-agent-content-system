@@ -1,0 +1,48 @@
+{
+  "post_id": "YYYY-MM-DD-topic-slug",
+  "title": "Blog Post Title",
+  "current_phase": "SEO_COMPLETE",
+  "next_agent": "BlogAgent",
+  "last_updated": "2025-01-XXTXX:XX:XXZ",
+  "human_review_required": false,
+  "branch": "preview/blog-post-slug",
+  "preview_url": "https://preview.example.com/blog-post-slug",
+  "final_url": null,
+  "status": "in_progress",
+  "agents_run": ["SEOAgent"],
+  "agent_outputs": {
+    "SEOAgent": "seo-results.json",
+    "BlogAgent": "blog-draft.md",
+    "ReviewAgent": "blog-final.md",
+    "ImageAgent": "images/",
+    "PublishingAgent": "preview-deployment",
+    "SocialAgent": "social-posts.md"
+  },
+  "metadata": {
+    "primary_keyword": "target keyword",
+    "secondary_keywords": ["keyword1", "keyword2", "keyword3"],
+    "content_type": "gift-guide",
+    "estimated_word_count": 1500,
+    "target_audience": "gift shoppers",
+    "seo_score": 85,
+    "competition_level": "medium",
+    "search_volume": "high"
+  },
+  "timestamps": {
+    "created": "2025-01-XXTXX:XX:XXZ",
+    "seo_started": "2025-01-XXTXX:XX:XXZ",
+    "seo_completed": "2025-01-XXTXX:XX:XXZ",
+    "blog_started": null,
+    "blog_completed": null,
+    "review_started": null,
+    "review_completed": null,
+    "image_started": null,
+    "image_completed": null,
+    "publishing_started": null,
+    "publishing_completed": null,
+    "social_started": null,
+    "social_completed": null
+  },
+  "errors": [],
+  "notes": "Workflow state template for multi-agent content system"
+} 

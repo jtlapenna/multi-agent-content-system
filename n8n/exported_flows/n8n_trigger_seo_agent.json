@@ -1,0 +1,64 @@
+{
+  "name": "Trigger SEO Agent via Slack",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "start-seo-agent",
+        "responseMode": "lastNode"
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        200,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "item.agent_name = 'SEOAgent';\nitem.blog_slug = 'blog-2025-07-25-sleep-training';\nitem.slack_text = `/cursor run ${item.agent_name} for ${item.blog_slug}`;\nreturn item;"
+      },
+      "name": "Set Slack Message",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        400,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "requestMethod": "POST",
+        "url": "https://slack.com/api/chat.postMessage",
+        "jsonParameters": true,
+        "options": {},
+        "bodyParametersJson": "{\"channel\": \"YOUR_CHANNEL_ID\", \"text\": \"={{$json[\\\"slack_text\\\"]}}\"}",
+        "headerParametersJson": "{\"Authorization\": \"Bearer YOUR_SLACK_BOT_TOKEN\", \"Content-Type\": \"application/json\"}"
+      },
+      "name": "Send Slack Message",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        600,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          "Set Slack Message"
+        ]
+      ]
+    },
+    "Set Slack Message": {
+      "main": [
+        [
+          "Send Slack Message"
+        ]
+      ]
+    }
+  }
+}
