@@ -24,6 +24,7 @@ const cursorWorkflowCommand = require('./commands/cursorWorkflow');
 const initiateCommand = require('./commands/initiate');
 const statusCommand = require('./commands/status');
 const agentCommand = require('./commands/agent');
+const workflowCommand = require('./commands/workflow');
 
 const program = new Command();
 
@@ -63,6 +64,7 @@ program.addCommand(cursorWorkflowCommand);
 program.addCommand(initiateCommand);
 program.addCommand(statusCommand);
 program.addCommand(agentCommand);
+program.addCommand(workflowCommand);
 
 // Interactive mode
 program
