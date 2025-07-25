@@ -136,6 +136,12 @@ await fs.writeFile('workflow_state.json', JSON.stringify(workflowState, null, 2)
 - Log notification sent
 
 ### 10. Monitor Approval Status
+```bash
+# Check for approval status (implementation needed)
+const approvalStatus = await checkApprovalStatus(prNumber);
+# Note: This method needs to be implemented based on your approval system
+# Options: Webhook monitoring, API polling, or manual trigger
+```
 - Check for approval notifications or webhook calls
 - Monitor PR status for approval/merge events
 - Wait for human approval decision
@@ -152,7 +158,7 @@ if (approvalStatus === 'approved') {
   
   # Trigger production deployment
   const cloudflareAPI = new CloudflareAPI();
-  await cloudflareAPI.deployToProduction(branchName);
+  await cloudflareAPI.deployToProduction('main');
   
   # Update workflow state
   workflowState.publishing_metadata.approval_status = "published";

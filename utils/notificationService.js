@@ -119,6 +119,105 @@ class NotificationService {
   }
 
   /**
+   * Generate live publishing email content
+   */
+  generateLivePublishingEmail(subject, liveUrl, publishedAt, publishingMetadata) {
+    return `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>${subject}</title>
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+    <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h1 style="color: #2c5aa0;">🚀 Content Published Live</h1>
+        
+        <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h2 style="margin-top: 0; color: #2c5aa0;">${publishingMetadata.title || 'Blog Post'}</h2>
+            <p><strong>Published:</strong> ${publishedAt}</p>
+            <p><strong>Live URL:</strong> <a href="${liveUrl}" style="color: #2c5aa0;">${liveUrl}</a></p>
+        </div>
+
+        <div style="margin: 20px 0;">
+            <h3 style="color: #2c5aa0;">🔗 Quick Links</h3>
+            <ul>
+                <li><a href="${liveUrl}" style="color: #2c5aa0;">View Live Content</a></li>
+                <li><a href="${publishingMetadata.pr_url || '#'}" style="color: #2c5aa0;">GitHub Pull Request</a></li>
+            </ul>
+        </div>
+
+        <div style="background: #e8f4fd; padding: 15px; border-radius: 8px; margin: 20px 0;">
+            <h3 style="margin-top: 0; color: #2c5aa0;">📊 Publishing Summary</h3>
+            <ul>
+                <li>Content successfully merged to main branch</li>
+                <li>Production deployment completed</li>
+                <li>Preview branch cleaned up</li>
+                <li>Social posts ready for manual posting</li>
+            </ul>
+        </div>
+
+        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; font-size: 12px; color: #666;">
+            <p>This notification was sent by the BrightGift Content Automation System.</p>
+        </div>
+    </div>
+</body>
+</html>
+    `;
+  }
+
+  /**
+   * Generate rejection email content
+   */
+  generateRejectionEmail(subject, rejectionReason, rejectedAt, publishingMetadata) {
+    return `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>${subject}</title>
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+    <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h1 style="color: #d32f2f;">❌ Content Rejected</h1>
+        
+        <div style="background: #ffebee; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <h2 style="margin-top: 0; color: #d32f2f;">${publishingMetadata.title || 'Blog Post'}</h2>
+            <p><strong>Rejected:</strong> ${rejectedAt}</p>
+            <p><strong>Reason:</strong> ${rejectionReason}</p>
+        </div>
+
+        <div style="margin: 20px 0;">
+            <h3 style="color: #d32f2f;">📋 Next Steps</h3>
+            <ul>
+                <li>Review feedback and rejection reason</li>
+                <li>Make necessary content revisions</li>
+                <li>Resubmit for approval when ready</li>
+                <li>Preview branch has been cleaned up</li>
+            </ul>
+        </div>
+
+        <div style="background: #fff3e0; padding: 15px; border-radius: 8px; margin: 20px 0;">
+            <h3 style="margin-top: 0; color: #d32f2f;">💡 Improvement Suggestions</h3>
+            <p>Consider the following areas for improvement:</p>
+            <ul>
+                <li>Content quality and accuracy</li>
+                <li>SEO optimization and keyword usage</li>
+                <li>Affiliate product relevance and descriptions</li>
+                <li>Overall content structure and flow</li>
+            </ul>
+        </div>
+
+        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; font-size: 12px; color: #666;">
+            <p>This notification was sent by the BrightGift Content Automation System.</p>
+        </div>
+    </div>
+</body>
+</html>
+    `;
+  }
+
+  /**
    * Generate approval email content
    */
   generateApprovalEmail(subject, previewUrl, prUrl, prNumber, topic, socialPosts) {
@@ -222,6 +321,128 @@ class NotificationService {
   }
 
   /**
+   * Send live publishing Slack notification
+   */
+  async sendLivePublishingSlackNotification(subject, liveUrl, publishedAt, publishingMetadata) {
+    if (!this.config.slack.webhook) {
+      throw new Error('Slack webhook not configured');
+    }
+
+    const message = {
+      text: subject,
+      blocks: [
+        {
+          type: 'header',
+          text: {
+            type: 'plain_text',
+            text: '🚀 Content Published Live'
+          }
+        },
+        {
+          type: 'section',
+          fields: [
+            {
+              type: 'mrkdwn',
+              text: `*Title:*\n${publishingMetadata.title || 'Blog Post'}`
+            },
+            {
+              type: 'mrkdwn',
+              text: `*Published:*\n${publishedAt}`
+            }
+          ]
+        },
+        {
+          type: 'section',
+          text: {
+            type: 'mrkdwn',
+            text: `*Live URL:* <${liveUrl}|View Live Content>`
+          }
+        },
+        {
+          type: 'section',
+          text: {
+            type: 'mrkdwn',
+            text: `*Status:* ✅ Successfully published to production`
+          }
+        }
+      ]
+    };
+
+    const response = await fetch(this.config.slack.webhook, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(message)
+    });
+
+    if (!response.ok) {
+      throw new Error(`Slack API error: ${response.status}`);
+    }
+  }
+
+  /**
+   * Send rejection Slack notification
+   */
+  async sendRejectionSlackNotification(subject, rejectionReason, rejectedAt, publishingMetadata) {
+    if (!this.config.slack.webhook) {
+      throw new Error('Slack webhook not configured');
+    }
+
+    const message = {
+      text: subject,
+      blocks: [
+        {
+          type: 'header',
+          text: {
+            type: 'plain_text',
+            text: '❌ Content Rejected'
+          }
+        },
+        {
+          type: 'section',
+          fields: [
+            {
+              type: 'mrkdwn',
+              text: `*Title:*\n${publishingMetadata.title || 'Blog Post'}`
+            },
+            {
+              type: 'mrkdwn',
+              text: `*Rejected:*\n${rejectedAt}`
+            }
+          ]
+        },
+        {
+          type: 'section',
+          text: {
+            type: 'mrkdwn',
+            text: `*Reason:*\n${rejectionReason}`
+          }
+        },
+        {
+          type: 'section',
+          text: {
+            type: 'mrkdwn',
+            text: `*Status:* ❌ Content rejected - review required`
+          }
+        }
+      ]
+    };
+
+    const response = await fetch(this.config.slack.webhook, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(message)
+    });
+
+    if (!response.ok) {
+      throw new Error(`Slack API error: ${response.status}`);
+    }
+  }
+
+  /**
    * Send Slack notification
    */
   async sendSlackNotification(subject, previewUrl, prUrl, prNumber, topic, socialPosts) {
@@ -279,6 +500,86 @@ class NotificationService {
 
     if (!response.ok) {
       throw new Error(`Slack API error: ${response.status}`);
+    }
+  }
+
+  /**
+   * Send live publishing notification
+   */
+  async sendLivePublishingNotification(publishingMetadata) {
+    await this.initialize();
+
+    const subject = `Content Published Live - ${publishingMetadata.title || 'Blog Post'}`;
+    const liveUrl = publishingMetadata.live_url || 'Not available';
+    const publishedAt = publishingMetadata.published_at || new Date().toISOString();
+
+    const emailContent = this.generateLivePublishingEmail(subject, liveUrl, publishedAt, publishingMetadata);
+    
+    // Log notification
+    console.log(chalk.cyan('\n🚀 Live Publishing Notification'));
+    console.log(chalk.gray('='.repeat(40)));
+    console.log(chalk.white(`Subject: ${subject}`));
+    console.log(chalk.gray(`Live URL: ${liveUrl}`));
+    console.log(chalk.gray(`Published: ${publishedAt}`));
+
+    // Send email if configured
+    if (this.transporter && this.config.recipients.length > 0) {
+      try {
+        await this.sendEmail(subject, emailContent);
+        console.log(chalk.green('✅ Live publishing email sent'));
+      } catch (error) {
+        console.error(chalk.red(`❌ Live publishing email failed: ${error.message}`));
+      }
+    }
+
+    // Send Slack notification if configured
+    if (this.config.slack.webhook) {
+      try {
+        await this.sendLivePublishingSlackNotification(subject, liveUrl, publishedAt, publishingMetadata);
+        console.log(chalk.green('✅ Live publishing Slack notification sent'));
+      } catch (error) {
+        console.error(chalk.red(`❌ Live publishing Slack notification failed: ${error.message}`));
+      }
+    }
+  }
+
+  /**
+   * Send rejection notification
+   */
+  async sendRejectionNotification(publishingMetadata) {
+    await this.initialize();
+
+    const subject = `Content Rejected - ${publishingMetadata.title || 'Blog Post'}`;
+    const rejectionReason = publishingMetadata.rejection_reason || 'No reason provided';
+    const rejectedAt = publishingMetadata.rejected_at || new Date().toISOString();
+
+    const emailContent = this.generateRejectionEmail(subject, rejectionReason, rejectedAt, publishingMetadata);
+    
+    // Log notification
+    console.log(chalk.cyan('\n❌ Rejection Notification'));
+    console.log(chalk.gray('='.repeat(40)));
+    console.log(chalk.white(`Subject: ${subject}`));
+    console.log(chalk.gray(`Reason: ${rejectionReason}`));
+    console.log(chalk.gray(`Rejected: ${rejectedAt}`));
+
+    // Send email if configured
+    if (this.transporter && this.config.recipients.length > 0) {
+      try {
+        await this.sendEmail(subject, emailContent);
+        console.log(chalk.green('✅ Rejection email sent'));
+      } catch (error) {
+        console.error(chalk.red(`❌ Rejection email failed: ${error.message}`));
+      }
+    }
+
+    // Send Slack notification if configured
+    if (this.config.slack.webhook) {
+      try {
+        await this.sendRejectionSlackNotification(subject, rejectionReason, rejectedAt, publishingMetadata);
+        console.log(chalk.green('✅ Rejection Slack notification sent'));
+      } catch (error) {
+        console.error(chalk.red(`❌ Rejection Slack notification failed: ${error.message}`));
+      }
     }
   }
 

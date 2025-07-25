@@ -418,6 +418,31 @@ class CloudflareAPI {
   }
 
   /**
+   * Deploy to production (main branch)
+   */
+  async deployToProduction(branchName) {
+    console.log(`🚀 Deploying to production from branch: ${branchName}`);
+    
+    try {
+      // Create production deployment from main branch
+      const deployment = await this.createDeployment('main', true);
+      
+      console.log(`✅ Production deployment created: ${deployment.id}`);
+      console.log(`   URL: ${deployment.url}`);
+      
+      // Wait for deployment to complete
+      await this.waitForDeployment(deployment.id);
+      
+      console.log(`✅ Production deployment completed successfully`);
+      return deployment;
+      
+    } catch (error) {
+      console.error(`❌ Production deployment failed: ${error.message}`);
+      throw error;
+    }
+  }
+
+  /**
    * Test API connection
    */
   async testConnection() {
