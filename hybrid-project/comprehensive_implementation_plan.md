@@ -80,22 +80,25 @@ Create the AI agent infrastructure and instruction sets, leveraging existing uti
   - SEO, Blog, Review, Image, Publishing, and Social agents all have detailed instructions
   - Instructions include workflow steps, tools, dependencies, and success criteria
   
-- **Update Utility Files for Agent Integration**
-  - Update 11 reusable utilities to work with the agent system
-  - Integrate with Supabase state management (from Phase 3)
-  - Add agent-specific error handling and logging
-  - Ensure compatibility with agent handoff requirements
+- **🔄 Agent Integration (IN PROGRESS - 2/6 complete)**
+  - **✅ SEOAgent** - `utils/enhancedSEOProcessor.js` integrated with `runSEOAgent()` method
+  - **✅ ReviewAgent** - `utils/contentChecker.js` integrated with `runReviewAgent()` method
+  - **⏳ BlogAgent** - Need to create agent integration (likely new file)
+  - **⏳ ImageAgent** - Need to integrate `utils/images.js` with agent system
+  - **⏳ PublishingAgent** - Need to integrate `utils/githubAPI.js` and `utils/cloudflareAPI.js`
+  - **⏳ SocialAgent** - Need to integrate `utils/notificationService.js`
   
-- **Test Agent Communication and Workflow**
-  - Test complete agent workflow using existing infrastructure
-  - Verify agent handoffs and state management
-  - Test n8n integration and Slack triggers
-  - Validate end-to-end workflow execution
+- **⏳ Complete Agent Workflow Testing**
+  - **Current**: Only 2 agents integrated, partial workflow testing
+  - **Required**: All 6 agents integrated for end-to-end workflow testing
+  - **Required**: Verify all agent instructions work with integrated utilities
+  - **Required**: Test complete workflow from SEO → Blog → Review → Image → Publishing → Social
 
 ### 🔧 Deliverables:
-- Complete agent instruction sets
-- Working trigger system
-- Tested agent communication flow
+- Complete agent instruction sets ✅
+- All 6 agents fully integrated with utilities ⏳
+- Working end-to-end workflow system ⏳
+- Tested agent communication flow ⏳
 
 ### 📚 **Phase 4 Cross-References:**
 - **Agent Instructions**: `agents/seo/instructions.md`, `agents/blog/instructions.md` - Existing templates
@@ -129,9 +132,10 @@ Create the AI agent infrastructure and instruction sets, leveraging existing uti
 - **Output Formats**: Ensure compatibility with agent handoff requirements
 
 #### **🎯 Implementation Priority:**
-1. **High Priority**: Update core utilities (SEO, Content Checker, GitHub, Supabase)
-2. **Medium Priority**: Update supporting utilities (Images, Notifications, Keyword Bank)
-3. **Low Priority**: Add advanced features and optimizations
+1. **High Priority**: Complete remaining agent integrations (Blog, Image, Publishing, Social)
+2. **Medium Priority**: Verify all agent instructions work with integrated utilities
+3. **High Priority**: End-to-end workflow testing with all 6 agents
+4. **Low Priority**: Advanced features and optimizations
 
 ### 🤖 **Agent Instructions Status:**
 
@@ -154,7 +158,7 @@ Each agent instruction includes:
 - **Notes** (important considerations and best practices)
 
 #### **🎯 Ready for Implementation:**
-All agent instructions are complete and ready for use. The next step is updating the utility files to work with the agent system.
+All agent instructions are complete and ready for use. The next step is completing the remaining agent integrations and testing the full end-to-end workflow.
 
 ---
 
@@ -339,7 +343,7 @@ Enable the system to handle multiple websites and brands.
 - Phase 1: ✅ Clean Template Creation
 - Phase 2: ✅ Template Migration & Setup
 - Phase 3: ✅ Core Infrastructure Setup
-- Phase 4: 🔄 Agent System Scaffolding (IN PROGRESS)
+- Phase 4: 🔄 Agent System Scaffolding (IN PROGRESS - 2/6 agents integrated)
 - Phase 5: ⏳ n8n Workflow Setup
 - Phase 6: ⏳ Dashboard Integration
 - Phase 7: ⏳ QA & Testing
@@ -354,8 +358,54 @@ Enable the system to handle multiple websites and brands.
 2. **✅ Phase 1 Complete** - Clean template created with all reusable components
 3. **✅ Phase 2 Complete** - Template migration and infrastructure testing completed
 4. **✅ Phase 3 Complete** - Core infrastructure setup (workflow management, agent routing, n8n)
-5. **🔄 Phase 4 In Progress** - Agent system scaffolding and instruction sets
-6. **Continue with Phase 5+** - n8n workflow setup and dashboard integration
+5. **🔄 Phase 4 In Progress** - Agent system scaffolding (2/6 agents integrated, need to complete all agents)
+6. **⏳ Phase 5** - n8n workflow setup and Slack integration (waiting for Phase 4 completion)
+7. **⏳ Phase 6+** - Dashboard integration and end-to-end testing (waiting for Phase 4 completion)
+
+### **Phase 4 Completion Requirements:**
+
+#### **🔄 Remaining Agent Integrations (4/6 needed):**
+
+1. **BlogAgent Integration**
+   - Create `utils/blogAgent.js` or integrate with existing content generation utilities
+   - Implement `runBlogAgent()` method that:
+     - Reads SEO results from previous agent
+     - Generates comprehensive blog content based on SEO strategy
+     - Saves `blog-draft.md` to blog post directory
+     - Updates workflow state to `BLOG_COMPLETE`
+
+2. **ImageAgent Integration**
+   - Update `utils/images.js` to add `runImageAgent()` method
+   - Implement image generation based on blog content
+   - Generate relevant images for blog post
+   - Save images to `images/` directory
+   - Update workflow state to `IMAGE_COMPLETE`
+
+3. **PublishingAgent Integration**
+   - Update `utils/githubAPI.js` and `utils/cloudflareAPI.js`
+   - Implement `runPublishingAgent()` method that:
+     - Creates GitHub branch for preview
+     - Deploys to Cloudflare Pages preview
+     - Updates workflow state with preview URLs
+     - Sets phase to `PUBLISHING_COMPLETE`
+
+4. **SocialAgent Integration**
+   - Update `utils/notificationService.js` to add `runSocialAgent()` method
+   - Generate social media content based on blog post
+   - Create social media posts and scheduling
+   - Update workflow state to `SOCIAL_COMPLETE`
+
+#### **🧪 End-to-End Testing Requirements:**
+- Test complete workflow: SEO → Blog → Review → Image → Publishing → Social
+- Verify each agent produces expected outputs
+- Test agent handoffs and state management
+- Validate file generation and content quality
+- Test error handling and recovery
+
+#### **✅ Only After Phase 4 Complete:**
+- Proceed to Phase 5 (n8n workflow automation)
+- Proceed to Phase 6 (dashboard integration)
+- Proceed to Phase 7 (QA & testing)
 
 ## 🚀 **Ready for Clean Slate Implementation**
 
