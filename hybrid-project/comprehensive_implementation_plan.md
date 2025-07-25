@@ -80,6 +80,7 @@ Audit, test, and refine all agent instruction sets to ensure they work correctly
   - Test instructions against actual utility capabilities
   - Identify gaps between instructions and available utilities
   - Verify workflow steps, tools, dependencies, and success criteria
+  - **Explicitly: The user and assistant will go through each agent's instructions one by one, collaborating to ensure each is correct, up to date, and complete before integration. Instructions will be refined as needed.**
   
 - **Refine Agent Instructions**
   - Update instructions based on audit findings
@@ -386,6 +387,7 @@ Enable the system to handle multiple websites and brands.
 3. **✅ Phase 2 Complete** - Template migration and infrastructure testing completed
 4. **✅ Phase 3 Complete** - Core infrastructure setup (workflow management, agent routing, n8n)
 5. **⏳ Phase 4** - Agent Instructions Audit & Refinement (NOT STARTED - critical step)
+   - **Explicitly: The user and assistant will review and refine each agent's instructions one by one, ensuring correctness and completeness before integration.**
 6. **⏳ Phase 5** - Agent System Integration (waiting for Phase 4 completion)
 7. **⏳ Phase 6** - n8n workflow setup and Slack integration (waiting for Phase 5 completion)
 8. **⏳ Phase 7+** - Dashboard integration and end-to-end testing (waiting for Phase 5 completion)
