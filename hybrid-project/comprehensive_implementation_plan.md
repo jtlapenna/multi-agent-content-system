@@ -39,24 +39,33 @@ Set up the foundational infrastructure for the automation system.
 
 ### 📋 Tasks:
 - **Configure Supabase**
-  - Import `supabase_schema.sql`
+  - Import `supabase_schema.sql` (see `supabase_schema_and_sql.md`)
   - Set up environment variables using `.env.example`
   - Configure row-level security and access controls
   
 - **Initialize GitHub Repository**
   - Set up main, dev, and site-specific branches
-  - Configure GitHub Actions and webhook listeners
-  - Set up proper file structure and naming conventions
+  - Configure GitHub Actions and webhook listeners (see `git_hub_webhook_listener_flow.md`)
+  - Set up proper file structure and naming conventions (see `blog_file_structure_and_state_format.md`)
   
 - **Set up n8n and Webhooks**
   - Install dependencies and configure n8n instance
-  - Import scaffolded flows from `n8n/flows/`
-  - Configure Slack integration and webhook endpoints
+  - Import scaffolded flows from `n8n/flows/` (see `n8n_trigger_seo_agent.json`)
+  - Configure Slack integration and webhook endpoints (see `n_8_n_slack_trigger_flow.md`)
 
 ### 🔧 Deliverables:
 - Working Supabase instance with proper schema
 - Configured GitHub repository with webhooks
 - Functional n8n instance with basic workflows
+
+### 📚 **Phase 3 Cross-References:**
+- **Database Schema**: `supabase_schema_and_sql.md` - Complete database design and SQL
+- **File Structure**: `blog_file_structure_and_state_format.md` - File organization standards
+- **GitHub Integration**: `git_hub_webhook_listener_flow.md` - Webhook setup and commit handling
+- **n8n Workflows**: `n8n_trigger_seo_agent.json` - Example n8n workflow export
+- **Slack Integration**: `n_8_n_slack_trigger_flow.md` - Slack-triggered agent workflow
+- **Agent Routing**: `agent_task_routing_design.md` - Task handoff logic between agents
+- **System Architecture**: `multi_agent_content_system.md` - Overall system design
 
 ---
 
@@ -267,8 +276,8 @@ Enable the system to handle multiple websites and brands.
 ### Current Status:
 - Phase 0: ✅ Project Audit & Assessment
 - Phase 1: ✅ Clean Template Creation
-- Phase 2: ⏳ Template Migration & Setup
-- Phase 3: ⏳ Core Infrastructure Setup
+- Phase 2: ✅ Template Migration & Setup
+- Phase 3: 🔄 Core Infrastructure Setup (IN PROGRESS)
 - Phase 4: ⏳ Agent System Scaffolding
 - Phase 5: ⏳ n8n Workflow Setup
 - Phase 6: ⏳ Dashboard Integration
@@ -282,8 +291,9 @@ Enable the system to handle multiple websites and brands.
 
 1. **✅ Phase 0 Complete** - Project audit completed, all components assessed
 2. **✅ Phase 1 Complete** - Clean template created with all reusable components
-3. **Ready for Phase 2** - Template migration and new project setup
-4. **Continue with Phase 3+** - Build the new automation system
+3. **✅ Phase 2 Complete** - Template migration and infrastructure testing completed
+4. **🔄 Phase 3 In Progress** - Core infrastructure setup (Supabase, GitHub, n8n)
+5. **Continue with Phase 4+** - Agent system scaffolding and workflow setup
 
 ## 🚀 **Ready for Clean Slate Implementation**
 

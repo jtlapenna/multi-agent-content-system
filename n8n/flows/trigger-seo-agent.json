@@ -1,0 +1,136 @@
+{
+  "name": "Trigger SEO Agent via Slack",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "start-seo-agent",
+        "responseMode": "lastNode"
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        200,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Extract data from webhook payload\nitem.agent_name = 'SEOAgent';\nitem.blog_slug = $input.first().json.blog_slug || 'blog-' + new Date().toISOString().split('T')[0];\nitem.topic = $input.first().json.topic || 'general';\nitem.slack_text = `/cursor run ${item.agent_name} for ${item.blog_slug} topic: ${item.topic}`;\n\n// Log the trigger\nconsole.log(`Triggering ${item.agent_name} for ${item.blog_slug}`);\n\nreturn item;"
+      },
+      "name": "Set Slack Message",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        400,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "requestMethod": "POST",
+        "url": "https://slack.com/api/chat.postMessage",
+        "jsonParameters": true,
+        "options": {},
+        "bodyParametersJson": "{\"channel\": \"{{$env.SLACK_CHANNEL_ID}}\", \"text\": \"={{$json[\\\"slack_text\\\"]}}\"}",
+        "headerParametersJson": "{\"Authorization\": \"Bearer {{$env.SLACK_BOT_TOKEN}}\", \"Content-Type\": \"application/json\"}"
+      },
+      "name": "Send Slack Message",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [
+        600,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "1",
+              "leftValue": "={{$json.status}}",
+              "rightValue": "ok",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "Check Success",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        800,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Log successful trigger\nconsole.log(`Successfully triggered ${item.agent_name} for ${item.blog_slug}`);\nreturn item;"
+      },
+      "name": "Log Success",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1000,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Log error\nconsole.error(`Failed to trigger ${item.agent_name} for ${item.blog_slug}`);\nreturn item;"
+      },
+      "name": "Log Error",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1000,
+        400
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          "Set Slack Message"
+        ]
+      ]
+    },
+    "Set Slack Message": {
+      "main": [
+        [
+          "Send Slack Message"
+        ]
+      ]
+    },
+    "Send Slack Message": {
+      "main": [
+        [
+          "Check Success"
+        ]
+      ]
+    },
+    "Check Success": {
+      "main": [
+        [
+          "Log Success"
+        ],
+        [
+          "Log Error"
+        ]
+      ]
+    }
+  }
+} 
