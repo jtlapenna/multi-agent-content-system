@@ -1,15 +1,19 @@
-const GoogleAdsAPI = require('../utils/googleAdsAPI');
-const { getKeywordBank } = require('../utils/keywordBank');
+const GoogleAdsAPI = require('./googleAdsAPI');
+const { getKeywordBank } = require('./keywordBank');
+const WorkflowStateTemplate = require('./workflowStateTemplate');
 
 /**
  * Enhanced SEO Research Processor
  * Intelligently combines data from multiple sources for optimal content strategy
+ * Updated for multi-agent system integration
  */
 class EnhancedSEOProcessor {
   constructor(config = {}) {
     this.config = config;
     this.googleAds = new GoogleAdsAPI(config);
     this.keywordBank = null;
+    this.workflowTemplate = new WorkflowStateTemplate();
+    this.agentName = 'SEOAgent';
   }
 
   /**
@@ -28,6 +32,71 @@ class EnhancedSEOProcessor {
       console.log('✅ Enhanced SEO Processor initialized');
     } catch (error) {
       console.warn(`⚠️ Enhanced SEO Processor initialization warning: ${error.message}`);
+    }
+  }
+
+  /**
+   * Agent-specific method: Run SEO research for a specific blog post
+   * @param {string} postId - Blog post identifier
+   * @param {object} workflowState - Current workflow state
+   */
+  async runSEOAgent(postId, workflowState) {
+    console.log(`🤖 ${this.agentName} starting work for ${postId}`);
+    
+    try {
+      // Load topic from workflow state
+      const topic = workflowState.topic;
+      if (!topic) {
+        throw new Error('No topic found in workflow state');
+      }
+
+      // Run SEO research
+      const seoResults = await this.processSEOResearch(topic);
+      
+      // Save results to blog post directory
+      const postDir = `content/blog-posts/${postId}`;
+      const fs = require('fs').promises;
+      await fs.mkdir(postDir, { recursive: true });
+      await fs.writeFile(`${postDir}/seo-results.json`, JSON.stringify(seoResults, null, 2));
+      
+      // Update workflow state
+      const updatedState = await this.workflowTemplate.updateWorkflowState(postId, {
+        current_phase: 'SEO_COMPLETE',
+        next_agent: 'BlogAgent',
+        agent_outputs: {
+          ...workflowState.agent_outputs,
+          [this.agentName]: 'seo-results.json'
+        }
+      });
+
+      console.log(`✅ ${this.agentName} completed work for ${postId}`);
+      console.log(`   Next agent: ${updatedState.next_agent}`);
+      
+      return {
+        success: true,
+        postId,
+        seoResults,
+        updatedState
+      };
+      
+    } catch (error) {
+      console.error(`❌ ${this.agentName} failed for ${postId}:`, error.message);
+      
+      // Update workflow state with error
+      await this.workflowTemplate.updateWorkflowState(postId, {
+        status: 'error',
+        errors: [...(workflowState.errors || []), {
+          agent: this.agentName,
+          error: error.message,
+          timestamp: new Date().toISOString()
+        }]
+      });
+      
+      return {
+        success: false,
+        postId,
+        error: error.message
+      };
     }
   }
 

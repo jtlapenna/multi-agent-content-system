@@ -1,17 +1,28 @@
 /**
  * Content Checker Utility
  * Checks existing content from main site API to avoid duplicates
+ * Updated for multi-agent system integration
  */
 
 const https = require('https');
 const chalk = require('chalk');
+const WorkflowStateTemplate = require('./workflowStateTemplate');
 
 class ContentChecker {
   constructor() {
-    // Load site configuration
-    const siteConfig = require('../../config/sites/bright-gift.json');
-    this.mainSiteUrl = `https://${siteConfig.domain}`;
-    this.apiEndpoint = `${this.mainSiteUrl}/api/blog-posts`;
+    // Load site configuration (with fallback)
+    try {
+      const siteConfig = require('../../config/sites/bright-gift.json');
+      this.mainSiteUrl = `https://${siteConfig.domain}`;
+      this.apiEndpoint = `${this.mainSiteUrl}/api/blog-posts`;
+    } catch (error) {
+      // Fallback configuration for testing
+      this.mainSiteUrl = 'https://bright-gift.com';
+      this.apiEndpoint = `${this.mainSiteUrl}/api/blog-posts`;
+      console.log('⚠️ Using fallback site configuration for testing');
+    }
+    this.workflowTemplate = new WorkflowStateTemplate();
+    this.agentName = 'ReviewAgent';
   }
 
   /**
@@ -288,6 +299,208 @@ class ContentChecker {
       analysis,
       recommendations
     };
+  }
+
+  /**
+   * Agent-specific method: Run content review and optimization for a specific blog post
+   * @param {string} postId - Blog post identifier
+   * @param {object} workflowState - Current workflow state
+   */
+  async runReviewAgent(postId, workflowState) {
+    console.log(`🤖 ${this.agentName} starting work for ${postId}`);
+    
+    try {
+      // Load blog content from previous agent
+      const fs = require('fs').promises;
+      const postDir = `content/blog-posts/${postId}`;
+      const blogDraftPath = `${postDir}/blog-draft.md`;
+      const seoResultsPath = `${postDir}/seo-results.json`;
+      
+      // Check if required files exist
+      const blogDraft = await fs.readFile(blogDraftPath, 'utf8');
+      const seoResults = JSON.parse(await fs.readFile(seoResultsPath, 'utf8'));
+      
+      // Run content review and optimization
+      const reviewResults = await this.reviewAndOptimizeContent(blogDraft, seoResults);
+      
+      // Save optimized content
+      await fs.writeFile(`${postDir}/blog-final.md`, reviewResults.optimizedContent);
+      
+      // Update workflow state
+      const updatedState = await this.workflowTemplate.updateWorkflowState(postId, {
+        current_phase: 'REVIEW_COMPLETE',
+        next_agent: 'ImageAgent',
+        agent_outputs: {
+          ...workflowState.agent_outputs,
+          [this.agentName]: 'blog-final.md'
+        },
+        review_notes: reviewResults.notes,
+        optimization_score: reviewResults.score
+      });
+
+      console.log(`✅ ${this.agentName} completed work for ${postId}`);
+      console.log(`   Optimization score: ${reviewResults.score}/100`);
+      console.log(`   Next agent: ${updatedState.next_agent}`);
+      
+      return {
+        success: true,
+        postId,
+        reviewResults,
+        updatedState
+      };
+      
+    } catch (error) {
+      console.error(`❌ ${this.agentName} failed for ${postId}:`, error.message);
+      
+      // Update workflow state with error
+      await this.workflowTemplate.updateWorkflowState(postId, {
+        status: 'error',
+        errors: [...(workflowState.errors || []), {
+          agent: this.agentName,
+          error: error.message,
+          timestamp: new Date().toISOString()
+        }]
+      });
+      
+      return {
+        success: false,
+        postId,
+        error: error.message
+      };
+    }
+  }
+
+  /**
+   * Review and optimize blog content
+   * @param {string} blogContent - Blog content to review
+   * @param {object} seoResults - SEO research results
+   */
+  async reviewAndOptimizeContent(blogContent, seoResults) {
+    console.log('🔍 Reviewing and optimizing blog content...');
+    
+    const review = {
+      originalLength: blogContent.length,
+      wordCount: blogContent.split(/\s+/).length,
+      optimizationScore: 0,
+      notes: [],
+      optimizedContent: blogContent
+    };
+
+    // Check for SEO optimization
+    const seoCheck = this.checkSEOOptimization(blogContent, seoResults);
+    review.notes.push(...seoCheck.notes);
+    review.optimizationScore += seoCheck.score;
+
+    // Check for readability
+    const readabilityCheck = this.checkReadability(blogContent);
+    review.notes.push(...readabilityCheck.notes);
+    review.optimizationScore += readabilityCheck.score;
+
+    // Check for structure
+    const structureCheck = this.checkStructure(blogContent);
+    review.notes.push(...structureCheck.notes);
+    review.optimizationScore += structureCheck.score;
+
+    // Apply optimizations
+    review.optimizedContent = this.applyOptimizations(blogContent, review.notes);
+    
+    return {
+      score: Math.min(100, review.optimizationScore),
+      notes: review.notes,
+      optimizedContent: review.optimizedContent,
+      originalWordCount: review.wordCount,
+      optimizedWordCount: review.optimizedContent.split(/\s+/).length
+    };
+  }
+
+  /**
+   * Check SEO optimization
+   */
+  checkSEOOptimization(content, seoResults) {
+    const notes = [];
+    let score = 0;
+    
+    // Check for target keywords
+    const targetKeywords = seoResults.keywordAnalysis?.map(k => k.keyword) || [];
+    const foundKeywords = targetKeywords.filter(keyword => 
+      content.toLowerCase().includes(keyword.toLowerCase())
+    );
+    
+    if (foundKeywords.length > 0) {
+      score += 30;
+      notes.push(`✅ Found ${foundKeywords.length}/${targetKeywords.length} target keywords`);
+    } else {
+      notes.push(`⚠️ No target keywords found in content`);
+    }
+
+    // Check for proper headings
+    const headings = content.match(/^#{1,6}\s+.+$/gm) || [];
+    if (headings.length >= 3) {
+      score += 20;
+      notes.push(`✅ Found ${headings.length} headings for structure`);
+    } else {
+      notes.push(`⚠️ Need more headings for better structure`);
+    }
+
+    return { score, notes };
+  }
+
+  /**
+   * Check readability
+   */
+  checkReadability(content) {
+    const notes = [];
+    let score = 0;
+    
+    // Check word count
+    const wordCount = content.split(/\s+/).length;
+    if (wordCount >= 1200) {
+      score += 25;
+      notes.push(`✅ Good word count: ${wordCount} words`);
+    } else {
+      notes.push(`⚠️ Consider adding more content (currently ${wordCount} words)`);
+    }
+
+    // Check for paragraphs
+    const paragraphs = content.split(/\n\n/).length;
+    if (paragraphs >= 5) {
+      score += 15;
+      notes.push(`✅ Good paragraph structure: ${paragraphs} paragraphs`);
+    } else {
+      notes.push(`⚠️ Consider breaking content into more paragraphs`);
+    }
+
+    return { score, notes };
+  }
+
+  /**
+   * Check content structure
+   */
+  checkStructure(content) {
+    const notes = [];
+    let score = 0;
+    
+    // Check for introduction and conclusion
+    if (content.toLowerCase().includes('introduction') || content.toLowerCase().includes('conclusion')) {
+      score += 10;
+      notes.push(`✅ Content has clear structure`);
+    } else {
+      notes.push(`⚠️ Consider adding clear introduction and conclusion`);
+    }
+
+    return { score, notes };
+  }
+
+  /**
+   * Apply optimizations to content
+   */
+  applyOptimizations(content, notes) {
+    let optimized = content;
+    
+    // Apply optimizations based on notes
+    // This is a simplified version - in practice, you'd have more sophisticated optimization logic
+    
+    return optimized;
   }
 }
 
