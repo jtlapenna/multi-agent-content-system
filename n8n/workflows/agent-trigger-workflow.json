@@ -1,0 +1,491 @@
+{
+  "name": "Agent Trigger Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "agent-trigger",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "webhookId": "agent-trigger-webhook"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.agent_name }}",
+              "operation": "equals",
+              "value2": "SEOAgent"
+            }
+          ]
+        }
+      },
+      "id": "seo-agent-check",
+      "name": "SEO Agent Check",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.agent_name }}",
+              "operation": "equals",
+              "value2": "BlogAgent"
+            }
+          ]
+        }
+      },
+      "id": "blog-agent-check",
+      "name": "Blog Agent Check",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [460, 400]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.agent_name }}",
+              "operation": "equals",
+              "value2": "ReviewAgent"
+            }
+          ]
+        }
+      },
+      "id": "review-agent-check",
+      "name": "Review Agent Check",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [460, 500]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.agent_name }}",
+              "operation": "equals",
+              "value2": "ImageAgent"
+            }
+          ]
+        }
+      },
+      "id": "image-agent-check",
+      "name": "Image Agent Check",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [460, 600]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.agent_name }}",
+              "operation": "equals",
+              "value2": "PublishingAgent"
+            }
+          ]
+        }
+      },
+      "id": "publishing-agent-check",
+      "name": "Publishing Agent Check",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [460, 700]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:3000/api/agents/seo",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "postId",
+              "value": "={{ $json.post_id }}"
+            },
+            {
+              "name": "topic",
+              "value": "={{ $json.topic }}"
+            },
+            {
+              "name": "currentPhase",
+              "value": "={{ $json.current_phase }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "trigger-seo-agent",
+      "name": "Trigger SEO Agent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:3000/api/agents/blog",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "postId",
+              "value": "={{ $json.post_id }}"
+            },
+            {
+              "name": "topic",
+              "value": "={{ $json.topic }}"
+            },
+            {
+              "name": "currentPhase",
+              "value": "={{ $json.current_phase }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "trigger-blog-agent",
+      "name": "Trigger Blog Agent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [680, 400]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:3000/api/agents/review",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "postId",
+              "value": "={{ $json.post_id }}"
+            },
+            {
+              "name": "topic",
+              "value": "={{ $json.topic }}"
+            },
+            {
+              "name": "currentPhase",
+              "value": "={{ $json.current_phase }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "trigger-review-agent",
+      "name": "Trigger Review Agent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [680, 500]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:3000/api/agents/image",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "postId",
+              "value": "={{ $json.post_id }}"
+            },
+            {
+              "name": "topic",
+              "value": "={{ $json.topic }}"
+            },
+            {
+              "name": "currentPhase",
+              "value": "={{ $json.current_phase }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "trigger-image-agent",
+      "name": "Trigger Image Agent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [680, 600]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:3000/api/agents/publishing",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "postId",
+              "value": "={{ $json.post_id }}"
+            },
+            {
+              "name": "topic",
+              "value": "={{ $json.topic }}"
+            },
+            {
+              "name": "currentPhase",
+              "value": "={{ $json.current_phase }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "trigger-publishing-agent",
+      "name": "Trigger Publishing Agent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [680, 700]
+    },
+    {
+      "parameters": {
+        "url": "https://hooks.slack.com/services/YOUR_SLACK_WEBHOOK",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "text",
+              "value": "🤖 Agent triggered: {{ $json.agent_name }} for {{ $json.post_id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "slack-notification",
+      "name": "Slack Notification",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [900, 400]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"success\": true,\n  \"message\": \"Agent triggered successfully\",\n  \"agent\": \"{{ $json.agent_name }}\",\n  \"postId\": \"{{ $json.post_id }}\"\n}"
+      },
+      "id": "response",
+      "name": "Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1120, 400]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "SEO Agent Check",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Blog Agent Check",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Review Agent Check",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Image Agent Check",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Publishing Agent Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SEO Agent Check": {
+      "main": [
+        [
+          {
+            "node": "Trigger SEO Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Blog Agent Check": {
+      "main": [
+        [
+          {
+            "node": "Trigger Blog Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Review Agent Check": {
+      "main": [
+        [
+          {
+            "node": "Trigger Review Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Image Agent Check": {
+      "main": [
+        [
+          {
+            "node": "Trigger Image Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Publishing Agent Check": {
+      "main": [
+        [
+          {
+            "node": "Trigger Publishing Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger SEO Agent": {
+      "main": [
+        [
+          {
+            "node": "Slack Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger Blog Agent": {
+      "main": [
+        [
+          {
+            "node": "Slack Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger Review Agent": {
+      "main": [
+        [
+          {
+            "node": "Slack Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger Image Agent": {
+      "main": [
+        [
+          {
+            "node": "Slack Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger Publishing Agent": {
+      "main": [
+        [
+          {
+            "node": "Slack Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Slack Notification": {
+      "main": [
+        [
+          {
+            "node": "Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {},
+  "versionId": "1"
+} 

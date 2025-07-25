@@ -1,0 +1,67 @@
+{
+  "n8n": {
+    "webhooks": {
+      "agent_trigger": "http://localhost:3000/webhook/agent-trigger",
+      "state_sync": "http://localhost:3000/webhook/state-sync",
+      "error_handler": "http://localhost:3000/webhook/error-handler"
+    },
+    "slack": {
+      "webhook_url": "https://hooks.slack.com/services/YOUR_SLACK_WEBHOOK",
+      "channel": "#content-automation",
+      "username": "Content Automation Bot"
+    },
+    "supabase": {
+      "url": "https://your-project.supabase.co",
+      "api_key": "YOUR_SUPABASE_API_KEY",
+      "tables": {
+        "workflow_states": "workflow_states",
+        "error_logs": "error_logs",
+        "agent_logs": "agent_logs"
+      }
+    },
+    "agents": {
+      "api_base": "http://localhost:3000/api/agents",
+      "endpoints": {
+        "seo": "/seo",
+        "blog": "/blog",
+        "review": "/review",
+        "image": "/image",
+        "publishing": "/publishing",
+        "complete_workflow": "/complete-workflow",
+        "status": "/status"
+      }
+    }
+  },
+  "workflows": {
+    "agent_trigger": {
+      "name": "Agent Trigger Workflow",
+      "file": "agent-trigger-workflow.json",
+      "description": "Triggers agents based on webhook calls"
+    },
+    "state_sync": {
+      "name": "State Sync Workflow", 
+      "file": "state-sync-workflow.json",
+      "description": "Synchronizes workflow state with Supabase"
+    },
+    "error_handling": {
+      "name": "Error Handling Workflow",
+      "file": "error-handling-workflow.json", 
+      "description": "Handles errors and sends notifications"
+    }
+  },
+  "setup": {
+    "steps": [
+      "1. Install n8n: npm install -g n8n",
+      "2. Start n8n: n8n start",
+      "3. Import workflows from n8n/workflows/",
+      "4. Configure Slack webhook URL",
+      "5. Configure Supabase credentials",
+      "6. Test webhook endpoints"
+    ],
+    "webhook_urls": {
+      "agent_trigger": "http://localhost:5678/webhook/agent-trigger-webhook",
+      "state_sync": "http://localhost:5678/webhook/state-sync-webhook", 
+      "error_handler": "http://localhost:5678/webhook/error-handler-webhook"
+    }
+  }
+} 
