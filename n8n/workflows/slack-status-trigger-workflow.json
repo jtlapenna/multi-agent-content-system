@@ -1,0 +1,193 @@
+{
+  "name": "Slack Status Trigger Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "slack-status-trigger",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "slack-webhook-trigger",
+      "name": "Slack Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "webhookId": "slack-status-trigger-webhook"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.command }}",
+              "operation": "equals",
+              "value2": "/blog-status"
+            }
+          ]
+        }
+      },
+      "id": "command-check",
+      "name": "Command Check",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse the command text to extract post ID\nconst text = $input.first().json.text;\nconst userId = $input.first().json.user_id;\nconst channelId = $input.first().json.channel_id;\n\n// Validate input\nif (!text || text.trim() === '') {\n  throw new Error('Post ID is required. Usage: /blog-status <post-id>');\n}\n\n// Extract post ID\nconst postId = text.trim();\n\nreturn {\n  postId: postId,\n  userId: userId,\n  channelId: channelId\n};"
+      },
+      "id": "parse-command",
+      "name": "Parse Command",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:3000/api/agents/status/{{ $json.postId }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": false,
+        "options": {}
+      },
+      "id": "get-status",
+      "name": "Get Status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.success }}",
+              "operation": "equals",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "status-check",
+      "name": "Status Check",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1120, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"response_type\": \"in_channel\",\n  \"text\": \"📊 Blog Post Status\",\n  \"attachments\": [\n    {\n      \"color\": \"#36a64f\",\n      \"fields\": [\n        {\n          \"title\": \"Post ID\",\n          \"value\": \"{{ $('Get Status').item.json.status.postId }}\",\n          \"short\": true\n        },\n        {\n          \"title\": \"Current Phase\",\n          \"value\": \"{{ $('Get Status').item.json.status.currentPhase }}\",\n          \"short\": true\n        },\n        {\n          \"title\": \"Next Agent\",\n          \"value\": \"{{ $('Get Status').item.json.status.nextAgent }}\",\n          \"short\": true\n        },\n        {\n          \"title\": \"Status\",\n          \"value\": \"{{ $('Get Status').item.json.status.status }}\",\n          \"short\": true\n        },\n        {\n          \"title\": \"Last Updated\",\n          \"value\": \"{{ $('Get Status').item.json.status.lastUpdated }}\",\n          \"short\": false\n        }\n      ]\n    }\n  ]\n}"
+      },
+      "id": "success-response",
+      "name": "Success Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1340, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"response_type\": \"ephemeral\",\n  \"text\": \"❌ Post not found or error retrieving status\",\n  \"attachments\": [\n    {\n      \"color\": \"#ff0000\",\n      \"fields\": [\n        {\n          \"title\": \"Post ID\",\n          \"value\": \"{{ $('Parse Command').item.json.postId }}\",\n          \"short\": true\n        },\n        {\n          \"title\": \"Error\",\n          \"value\": \"{{ $('Get Status').item.json.error }}\",\n          \"short\": false\n        }\n      ]\n    }\n  ]\n}"
+      },
+      "id": "error-response",
+      "name": "Error Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1340, 500]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"response_type\": \"ephemeral\",\n  \"text\": \"❌ Invalid command. Usage: /blog-status <post-id>\"\n}"
+      },
+      "id": "invalid-command-response",
+      "name": "Invalid Command Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [680, 500]
+    }
+  ],
+  "connections": {
+    "Slack Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Command Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Command Check": {
+      "main": [
+        [
+          {
+            "node": "Parse Command",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Invalid Command Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Command": {
+      "main": [
+        [
+          {
+            "node": "Get Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Status": {
+      "main": [
+        [
+          {
+            "node": "Status Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Status Check": {
+      "main": [
+        [
+          {
+            "node": "Success Response",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Error Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {},
+  "versionId": "1"
+} 

@@ -1,0 +1,202 @@
+{
+  "name": "Slack Blog Trigger Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "slack-blog-trigger",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "slack-webhook-trigger",
+      "name": "Slack Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "webhookId": "slack-blog-trigger-webhook"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.command }}",
+              "operation": "equals",
+              "value2": "/create-blog"
+            }
+          ]
+        }
+      },
+      "id": "command-check",
+      "name": "Command Check",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse the command text to extract topic\nconst text = $input.first().json.text;\nconst userId = $input.first().json.user_id;\nconst channelId = $input.first().json.channel_id;\n\n// Validate input\nif (!text || text.trim() === '') {\n  throw new Error('Topic is required. Usage: /create-blog <topic>');\n}\n\n// Extract topic and optional metadata\nconst topic = text.trim();\nconst metadata = {\n  contentType: 'gift_guide',\n  targetAudience: 'adults',\n  requestedBy: userId,\n  channelId: channelId\n};\n\nreturn {\n  topic: topic,\n  metadata: metadata,\n  userId: userId,\n  channelId: channelId\n};"
+      },
+      "id": "parse-command",
+      "name": "Parse Command",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:3000/api/agents/complete-workflow",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "topic",
+              "value": "={{ $json.topic }}"
+            },
+            {
+              "name": "metadata",
+              "value": "={{ $json.metadata }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "create-workflow",
+      "name": "Create Workflow",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://hooks.slack.com/services/YOUR_SLACK_WEBHOOK",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "text",
+              "value": "🚀 Starting blog creation workflow for: {{ $('Parse Command').item.json.topic }}"
+            },
+            {
+              "name": "attachments",
+              "value": "[\n  {\n    \"color\": \"#36a64f\",\n    \"fields\": [\n      {\n        \"title\": \"Post ID\",\n        \"value\": \"{{ $json.postId }}\",\n        \"short\": true\n      },\n      {\n        \"title\": \"Topic\",\n        \"value\": \"{{ $('Parse Command').item.json.topic }}\",\n        \"short\": true\n      },\n      {\n        \"title\": \"Status\",\n        \"value\": \"{{ $json.result }}\",\n        \"short\": true\n      }\n    ]\n  }\n]"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "send-confirmation",
+      "name": "Send Confirmation",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1120, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"response_type\": \"in_channel\",\n  \"text\": \"✅ Blog creation workflow started successfully!\",\n  \"attachments\": [\n    {\n      \"color\": \"#36a64f\",\n      \"fields\": [\n        {\n          \"title\": \"Post ID\",\n          \"value\": \"{{ $('Create Workflow').item.json.postId }}\",\n          \"short\": true\n        },\n        {\n          \"title\": \"Topic\",\n          \"value\": \"{{ $('Parse Command').item.json.topic }}\",\n          \"short\": true\n        }\n      ]\n    }\n  ]\n}"
+      },
+      "id": "response",
+      "name": "Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1340, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"response_type\": \"ephemeral\",\n  \"text\": \"❌ Invalid command. Usage: /create-blog <topic>\"\n}"
+      },
+      "id": "error-response",
+      "name": "Error Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [680, 500]
+    }
+  ],
+  "connections": {
+    "Slack Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Command Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Command Check": {
+      "main": [
+        [
+          {
+            "node": "Parse Command",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Error Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Command": {
+      "main": [
+        [
+          {
+            "node": "Create Workflow",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Workflow": {
+      "main": [
+        [
+          {
+            "node": "Send Confirmation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Confirmation": {
+      "main": [
+        [
+          {
+            "node": "Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {},
+  "versionId": "1"
+} 
