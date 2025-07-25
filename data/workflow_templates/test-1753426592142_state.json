@@ -1,0 +1,13 @@
+{
+  "postId": "test-1753426592142",
+  "topic": "Test Blog Post",
+  "status": "testing",
+  "currentPhase": "seo_research",
+  "metadata": {
+    "test": true,
+    "timestamp": "2025-07-25T06:56:32.142Z"
+  },
+  "createdAt": "2025-07-25T06:56:32.223Z",
+  "updatedAt": "2025-07-25T06:56:32.223Z",
+  "current_phase": "seo_research"
+}
