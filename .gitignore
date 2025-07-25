@@ -14,30 +14,38 @@ yarn-error.log*
 # Build outputs
 dist/
 build/
-.next/
-out/
+*.tgz
+*.tar.gz
 
 # Logs
-logs
+logs/
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
 # Runtime data
-pids
+pids/
 *.pid
 *.seed
 *.pid.lock
 
 # Coverage directory used by tools like istanbul
 coverage/
+*.lcov
 
 # nyc test coverage
 .nyc_output
 
 # Dependency directories
+node_modules/
 jspm_packages/
 
 # Optional npm cache directory
 .npm
+
+# Optional eslint cache
+.eslintcache
 
 # Optional REPL history
 .node_repl_history
@@ -50,6 +58,7 @@ jspm_packages/
 
 # dotenv environment variables file
 .env
+.env.test
 
 # parcel-bundler cache (https://parceljs.org/)
 .cache
@@ -65,7 +74,7 @@ jspm_packages/
 .vuepress/dist
 
 # Serverless directories
-.serverless
+.serverless/
 
 # FuseBox cache
 .fusebox/
@@ -78,6 +87,10 @@ jspm_packages/
 
 # Stores VSCode versions used for testing VSCode extensions
 .vscode-test
+
+# Temporary folders
+tmp/
+temp/
 
 # OS generated files
 .DS_Store
@@ -95,9 +108,19 @@ Thumbs.db
 *.swo
 *~
 
-# Temporary files
-*.tmp
-*.temp
+# Content automation specific
+content/blog-posts/*/
+!content/blog-posts/.gitkeep
+workflow_state.json
+logs/
+*.json.bak
 
-# Content automation export (embedded git repo)
-content-automation-export-v2/ 
+# API keys and secrets
+secrets/
+keys/
+*.pem
+*.key
+
+# Test files
+test-results/
+coverage/ 

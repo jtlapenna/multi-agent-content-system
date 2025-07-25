@@ -8,13 +8,19 @@
 require('dotenv').config();
 
 const chalk = require('chalk');
+const supabaseClient = require('./utils/supabaseClient');
+const workflowStateManager = require('./utils/workflowStateManager');
+const notificationService = require('./utils/notificationService');
 
 async function testPhase2Infrastructure() {
-  console.log(chalk.cyan('\n🧪 Testing Phase 2 Infrastructure\n'));
+  console.log(chalk.cyan('\n�� Testing Phase 2 Infrastructure\n'));
 
   const tests = [
     { name: 'Environment Variables', fn: testEnvironmentVariables },
-    { name: 'Dependencies', fn: testDependencies }
+    { name: 'Dependencies', fn: testDependencies },
+    { name: 'Supabase Connection', fn: testSupabaseConnection },
+    { name: 'Workflow State Management', fn: testWorkflowStateManagement },
+    { name: 'Database Schema', fn: testDatabaseSchema }
   ];
 
   const results = [];
@@ -113,6 +119,95 @@ async function testDependencies() {
     
   } catch (error) {
     throw new Error(`Dependency test failed: ${error.message}`);
+  }
+}
+
+async function testSupabaseConnection() {
+  try {
+    await supabaseClient.initialize();
+    console.log(chalk.gray('   ✓ Supabase client initialized'));
+    
+    // Test basic query
+    const { data, error } = await supabaseClient.client
+      .from('blog_workflow_state')
+      .select('count')
+      .limit(1);
+    
+    if (error) {
+      throw error;
+    }
+    
+    console.log(chalk.gray('   ✓ Database query successful'));
+  } catch (error) {
+    throw new Error(`Supabase connection failed: ${error.message}`);
+  }
+}
+
+async function testWorkflowStateManagement() {
+  try {
+    const testPostId = `test-${Date.now()}`;
+    const testTopic = 'Test Blog Post';
+    
+    // Test workflow initialization
+    const workflow = await workflowStateManager.initializeWorkflow(testPostId, testTopic, {
+      test: true,
+      timestamp: new Date().toISOString()
+    });
+    
+    console.log(chalk.gray(`   ✓ Workflow initialized for ${testPostId}`));
+    
+    // Test state update
+    await workflowStateManager.updateWorkflowState(testPostId, {
+      status: 'testing',
+      current_phase: 'seo_research'
+    });
+    
+    console.log(chalk.gray('   ✓ State update successful'));
+    
+    // Test state retrieval
+    const retrievedState = await workflowStateManager.getWorkflowState(testPostId);
+    
+    if (retrievedState.post_id !== testPostId) {
+      throw new Error('State retrieval mismatch');
+    }
+    
+    console.log(chalk.gray('   ✓ State retrieval successful'));
+    
+    // Cleanup test data
+    await supabaseClient.client
+      .from('blog_workflow_state')
+      .delete()
+      .eq('post_id', testPostId);
+    
+    console.log(chalk.gray('   ✓ Test data cleaned up'));
+  } catch (error) {
+    throw new Error(`Workflow state management failed: ${error.message}`);
+  }
+}
+
+async function testDatabaseSchema() {
+  try {
+    // Test if required tables exist
+    const tables = ['blog_workflow_state', 'agent_results', 'blog_posts'];
+    
+    for (const table of tables) {
+      try {
+        const { data, error } = await supabaseClient.client
+          .from(table)
+          .select('count')
+          .limit(1);
+        
+        if (error) {
+          throw error;
+        }
+        
+        console.log(chalk.gray(`   ✓ Table '${table}' exists and accessible`));
+      } catch (error) {
+        throw new Error(`Table '${table}' not accessible: ${error.message}`);
+      }
+    }
+  } catch (error) {
+    throw new Error(`Database schema test failed: ${error.message}`);
   }
 }
 

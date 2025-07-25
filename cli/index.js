@@ -21,7 +21,6 @@ const keywordBankCommand = require('./commands/keywordBank');
 const githubCommand = require('./commands/github');
 const automateCommand = require('./commands/automate');
 const cursorWorkflowCommand = require('./commands/cursorWorkflow');
-const testInfrastructureCommand = require("./commands/test-infrastructure");
 
 const program = new Command();
 
@@ -58,7 +57,6 @@ program.addCommand(keywordBankCommand);
 program.addCommand(githubCommand);
 program.addCommand(automateCommand);
 program.addCommand(cursorWorkflowCommand);
-program.addCommand(testInfrastructureCommand);
 
 // Interactive mode
 program
