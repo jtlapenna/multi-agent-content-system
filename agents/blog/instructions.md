@@ -20,14 +20,37 @@ Generate high-quality, SEO-optimized blog content using Cursor agents based on S
 
 ## 🔄 Workflow Steps
 
-### 1. Load SEO Research and Topic
-```bash
-# Load SEO results and selected topic
-const seoResults = loadJSON('seo-results.json');
-const workflowState = loadJSON('workflow_state.json');
-const primaryTopic = seoResults.primary_topic || workflowState.topic;
-const targetKeywords = seoResults.target_keywords || [];
-const contentStrategy = seoResults.content_strategy || {};
+### 1. Parse Input Parameters and Load Data
+```javascript
+// Extract parameters from the command
+const blogSlug = process.argv[2] || 'blog-' + new Date().toISOString().split('T')[0];
+const topic = process.argv[3] || 'general';
+const phase = process.argv[4] || 'BLOG';
+const site = process.argv[5] || 'brightgift';
+
+console.log(`Blog Agent starting for: ${blogSlug}, topic: ${topic}, site: ${site}`);
+
+// Load SEO results and workflow state
+const contentDir = `content/blog-posts/${blogSlug}`;
+const fs = require('fs');
+const path = require('path');
+
+const seoResultsPath = path.join(contentDir, 'seo-results.json');
+const workflowStatePath = path.join(contentDir, 'workflow_state.json');
+
+if (!fs.existsSync(seoResultsPath)) {
+  throw new Error(`SEO results not found at: ${seoResultsPath}`);
+}
+
+const seoResults = JSON.parse(fs.readFileSync(seoResultsPath, 'utf8'));
+const workflowState = JSON.parse(fs.readFileSync(workflowStatePath, 'utf8'));
+
+console.log('Loaded SEO results and workflow state');
+
+// Extract key data from SEO results
+const primaryTopic = seoResults.topic || workflowState.topic;
+const targetKeywords = seoResults.keywordAnalysis || [];
+const contentStrategy = seoResults.contentStrategy || {};
 ```
 
 ### 2. Determine Content Type and Structure
@@ -96,38 +119,10 @@ Create content following the standard structure:
 - **Internal Linking**: Automatically suggest relevant internal links
 - **Tone**: Friendly but professional, helpful expert, inclusive
 
-### 6. Parse Input Parameters and Load Data
-```javascript
-// Extract parameters from the command
-const blogSlug = process.argv[2] || 'blog-' + new Date().toISOString().split('T')[0];
-const topic = process.argv[3] || 'general';
-const phase = process.argv[4] || 'BLOG';
-const site = process.argv[5] || 'brightgift';
-
-console.log(`Blog Agent starting for: ${blogSlug}, topic: ${topic}, site: ${site}`);
-
-// Load SEO results and workflow state
-const contentDir = `content/blog-posts/${blogSlug}`;
-const fs = require('fs');
-const path = require('path');
-
-const seoResultsPath = path.join(contentDir, 'seo-results.json');
-const workflowStatePath = path.join(contentDir, 'workflow_state.json');
-
-if (!fs.existsSync(seoResultsPath)) {
-  throw new Error(`SEO results not found at: ${seoResultsPath}`);
-}
-
-const seoResults = JSON.parse(fs.readFileSync(seoResultsPath, 'utf8'));
-const workflowState = JSON.parse(fs.readFileSync(workflowStatePath, 'utf8'));
-
-console.log('Loaded SEO results and workflow state');
-```
-
-### 7. Generate Blog Content
+### 6. Generate Blog Content
 ```javascript
 // Generate blog content based on SEO research
-const blogContent = generateBlogContent(seoResults, topic);
+const blogContent = generateBlogContent(seoResults, topic, targetKeywords);
 
 // Save blog draft to file
 const blogDraftPath = path.join(contentDir, 'blog-draft.md');
@@ -135,7 +130,7 @@ fs.writeFileSync(blogDraftPath, blogContent);
 console.log(`Blog draft saved to: ${blogDraftPath}`);
 ```
 
-### 8. Update Workflow State
+### 7. Update Workflow State
 ```javascript
 // Update workflow state with blog completion
 workflowState.current_phase = "BLOG_COMPLETE";
@@ -155,7 +150,7 @@ workflowState.blog_metadata = {
     afrofiliate: countAffiliateLinks(blogContent, 'afrofiliate')
   },
   internal_links: countInternalLinks(blogContent),
-  target_keywords: seoResults.keywordAnalysis.map(k => k.keyword)
+  target_keywords: targetKeywords.map(k => k.keyword)
 };
 
 // Update timestamps
@@ -167,7 +162,7 @@ fs.writeFileSync(workflowStatePath, JSON.stringify(workflowState, null, 2));
 console.log(`Workflow state updated: ${workflowStatePath}`);
 ```
 
-### 9. Commit Changes to GitHub
+### 8. Commit Changes to GitHub
 ```javascript
 // Commit all changes to trigger next agent
 const { execSync } = require('child_process');
@@ -192,8 +187,69 @@ try {
 }
 ```
 
-### 10. Trigger Next Agent
+### 9. Trigger Next Agent
 The GitHub commit above will automatically trigger the GitHub webhook, which will then trigger the next agent (ReviewAgent) via n8n.
+
+## 🔧 Helper Functions
+
+### **generateBlogContent(seoResults, topic, targetKeywords)**
+```javascript
+function generateBlogContent(seoResults, topic, targetKeywords) {
+  // Generate comprehensive blog content based on SEO research
+  // This function should implement the content generation logic
+  // using the SEO data, target keywords, and content strategy
+  
+  let content = `# ${topic}\n\n`;
+  
+  // Add introduction
+  content += generateIntroduction(topic, targetKeywords);
+  
+  // Add main content based on content strategy
+  content += generateMainContent(seoResults, topic);
+  
+  // Add conclusion
+  content += generateConclusion(topic);
+  
+  return content;
+}
+```
+
+### **countWords(content)**
+```javascript
+function countWords(content) {
+  return content.split(/\s+/).filter(word => word.length > 0).length;
+}
+```
+
+### **determineContentType(seoResults)**
+```javascript
+function determineContentType(seoResults) {
+  const strategy = seoResults.contentStrategy?.recommendedTopics?.[0]?.strategy;
+  return strategy?.type || 'educational';
+}
+```
+
+### **countAffiliateLinks(content, platform)**
+```javascript
+function countAffiliateLinks(content, platform) {
+  const patterns = {
+    amazon: /amazon-link/g,
+    bookshop: /bookshop-link/g,
+    afrofiliate: /afrofiliate-link/g
+  };
+  const matches = content.match(patterns[platform] || /affiliate-link/g);
+  return matches ? matches.length : 0;
+}
+```
+
+### **countInternalLinks(content)**
+```javascript
+function countInternalLinks(content) {
+  const internalLinkPattern = /\[.*?\]\(.*?\)/g;
+  const matches = content.match(internalLinkPattern);
+  return matches ? matches.length : 0;
+}
+```
 
 ## 📁 Output Files
 - `content/blog-posts/{blogSlug}/blog-draft.md` - Generated blog content in markdown format
