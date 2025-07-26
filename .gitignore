@@ -123,4 +123,4 @@ keys/
 
 # Test files
 test-results/
-coverage/ 
+coverage/ .env.backup
