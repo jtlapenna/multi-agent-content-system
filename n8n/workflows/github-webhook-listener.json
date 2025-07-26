@@ -1,0 +1,167 @@
+{
+  "name": "GitHub Webhook Listener",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "github-webhook",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "github-webhook-trigger",
+      "name": "GitHub Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "webhookId": "github-webhook-listener"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Parse GitHub webhook payload\nconst payload = $input.first().json;\n\n// Check if this is a push event\nif (payload.ref !== 'refs/heads/main' && payload.ref !== 'refs/heads/dev') {\n  // Not a push to main or dev branch, skip\n  return [];\n}\n\n// Look for workflow_state.json changes\nconst workflowStateFile = payload.commits?.find(commit => \n  commit.modified?.includes('workflow_state.json') ||\n  commit.added?.includes('workflow_state.json')\n);\n\nif (!workflowStateFile) {\n  // No workflow_state.json changes, skip\n  return [];\n}\n\n// Extract repository info\nconst repoName = payload.repository.name;\nconst repoOwner = payload.repository.owner.login;\nconst commitSha = payload.after;\n\n// Determine site name from repository\nlet siteName = 'brightgift'; // Default\nif (repoName.includes('brightgift')) {\n  siteName = 'brightgift';\n} else if (repoName.includes('anothersite')) {\n  siteName = 'anothersite';\n}\n\n// Fetch the updated workflow_state.json\nitem.repo_owner = repoOwner;\nitem.repo_name = repoName;\nitem.commit_sha = commitSha;\nitem.site_name = siteName;\n\n// We'll fetch the actual workflow_state.json in the next node\nreturn item;"
+      },
+      "id": "parse-github-webhook",
+      "name": "Parse GitHub Webhook",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://api.github.com/repos/{{ $json.repo_owner }}/{{ $json.repo_name }}/contents/workflow_state.json?ref={{ $json.commit_sha }}",
+        "authentication": "githubOAuth2",
+        "options": {}
+      },
+      "id": "fetch-workflow-state",
+      "name": "Fetch Workflow State",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Parse the workflow state\nconst workflowState = JSON.parse(Buffer.from($input.first().json.content, 'base64').toString());\n\n// Check if workflow is ready for next agent\nif (workflowState.status !== 'in_progress') {\n  // Workflow is not in progress, skip\n  return [];\n}\n\n// Determine next agent from workflow state\nconst nextAgent = workflowState.next_agent;\nconst currentPhase = workflowState.current_phase;\nconst blogSlug = workflowState.blog_slug || 'blog-' + new Date().toISOString().split('T')[0];\nconst topic = workflowState.topic || 'general';\n\n// Map agent names to our workflow format\nconst agentMapping = {\n  'SEOAgent': 'SEOAgent',\n  'BlogAgent': 'BlogAgent',\n  'ReviewAgent': 'ReviewAgent',\n  'ImageAgent': 'ImageAgent',\n  'PublishingAgent': 'PublishingAgent'\n};\n\nconst mappedAgent = agentMapping[nextAgent];\n\nif (!mappedAgent) {\n  // Unknown agent, skip\n  return [];\n}\n\n// Prepare payload for multi-site router\nitem.site_name = $('Parse GitHub Webhook').first().json.site_name;\nitem.agent_name = mappedAgent;\nitem.blog_slug = blogSlug;\nitem.topic = topic;\nitem.current_phase = currentPhase;\n\nconsole.log(`Triggering next agent: ${mappedAgent} for ${blogSlug} in phase ${currentPhase}`);\n\nreturn item;"
+      },
+      "id": "determine-next-agent",
+      "name": "Determine Next Agent",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.N8N_WEBHOOK_URL }}/agent-router",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "site_name",
+              "value": "={{ $json.site_name }}"
+            },
+            {
+              "name": "agent_name",
+              "value": "={{ $json.agent_name }}"
+            },
+            {
+              "name": "blog_slug",
+              "value": "={{ $json.blog_slug }}"
+            },
+            {
+              "name": "topic",
+              "value": "={{ $json.topic }}"
+            },
+            {
+              "name": "current_phase",
+              "value": "={{ $json.current_phase }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "trigger-next-agent",
+      "name": "Trigger Next Agent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1120, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"success\": true,\n  \"message\": \"Next agent triggered\",\n  \"agent\": \"{{ $('Determine Next Agent').first().json.agent_name }}\",\n  \"blog_slug\": \"{{ $('Determine Next Agent').first().json.blog_slug }}\",\n  \"phase\": \"{{ $('Determine Next Agent').first().json.current_phase }}\"\n}"
+      },
+      "id": "response",
+      "name": "Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1340, 300]
+    }
+  ],
+  "connections": {
+    "GitHub Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Parse GitHub Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse GitHub Webhook": {
+      "main": [
+        [
+          {
+            "node": "Fetch Workflow State",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Workflow State": {
+      "main": [
+        [
+          {
+            "node": "Determine Next Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Determine Next Agent": {
+      "main": [
+        [
+          {
+            "node": "Trigger Next Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger Next Agent": {
+      "main": [
+        [
+          {
+            "node": "Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {},
+  "versionId": "1"
+} 

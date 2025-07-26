@@ -38,6 +38,7 @@
     "https": "^1.0.0",
     "inquirer": "^9.2.0",
     "morgan": "^1.10.1",
+    "n8n": "^1.103.2",
     "node-fetch": "^3.3.0",
     "nodemailer": "^6.9.0",
     "openai": "^4.0.0",
