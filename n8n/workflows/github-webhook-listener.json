@@ -17,12 +17,12 @@
     },
     {
       "parameters": {
-        "functionCode": "// Parse GitHub webhook payload\nconst payload = $input.first().json;\n\n// Check if this is a push event\nif (payload.ref !== 'refs/heads/main' && payload.ref !== 'refs/heads/dev') {\n  // Not a push to main or dev branch, skip\n  return [];\n}\n\n// Look for workflow_state.json changes\nconst workflowStateFile = payload.commits?.find(commit => \n  commit.modified?.includes('workflow_state.json') ||\n  commit.added?.includes('workflow_state.json')\n);\n\nif (!workflowStateFile) {\n  // No workflow_state.json changes, skip\n  return [];\n}\n\n// Extract repository info\nconst repoName = payload.repository.name;\nconst repoOwner = payload.repository.owner.login;\nconst commitSha = payload.after;\n\n// Determine site name from repository\nlet siteName = 'brightgift'; // Default\nif (repoName.includes('brightgift')) {\n  siteName = 'brightgift';\n} else if (repoName.includes('anothersite')) {\n  siteName = 'anothersite';\n}\n\n// Fetch the updated workflow_state.json\nitem.repo_owner = repoOwner;\nitem.repo_name = repoName;\nitem.commit_sha = commitSha;\nitem.site_name = siteName;\n\n// We'll fetch the actual workflow_state.json in the next node\nreturn item;"
+        "jsCode": "// Parse GitHub webhook payload\nconst payload = $input.first().json;\n\n// Debug: Log what we received\nconsole.log('GitHub webhook payload:', JSON.stringify(payload, null, 2));\n\n// Initialize item object\nconst item = {};\n\n// Check if this is a push event\nconsole.log('Checking ref:', payload.ref);\nif (payload.ref !== 'refs/heads/main' && payload.ref !== 'refs/heads/dev') {\n  console.log('Not a push to main or dev branch, skipping');\n  return [];\n}\n\n// Look for workflow_state.json changes\nconsole.log('Checking commits:', JSON.stringify(payload.commits, null, 2));\nconst workflowStateFile = payload.commits?.find(commit => \n  commit.modified?.includes('workflow_state.json') ||\n  commit.added?.includes('workflow_state.json')\n);\n\nconsole.log('Workflow state file found:', workflowStateFile);\n\nif (!workflowStateFile) {\n  console.log('No workflow_state.json changes, skipping');\n  return [];\n}\n\n// Extract repository info\nconst repoName = payload.repository.name;\nconst repoOwner = payload.repository.owner.login;\nconst commitSha = payload.after;\n\nconsole.log('Repository info:', { repoName, repoOwner, commitSha });\n\n// Determine site name from repository\nlet siteName = 'brightgift'; // Default\nif (repoName.includes('brightgift')) {\n  siteName = 'brightgift';\n} else if (repoName.includes('anothersite')) {\n  siteName = 'anothersite';\n}\n\n// Fetch the updated workflow_state.json\nitem.repo_owner = repoOwner;\nitem.repo_name = repoName;\nitem.commit_sha = commitSha;\nitem.site_name = siteName;\n\nconsole.log('Returning item:', JSON.stringify(item, null, 2));\n\n// We'll fetch the actual workflow_state.json in the next node\nreturn item;"
       },
       "id": "parse-github-webhook",
       "name": "Parse GitHub Webhook",
-      "type": "n8n-nodes-base.function",
-      "typeVersion": 1,
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
       "position": [460, 300]
     },
     {
@@ -39,12 +39,12 @@
     },
     {
       "parameters": {
-        "functionCode": "// Parse the workflow state\nconst workflowState = JSON.parse(Buffer.from($input.first().json.content, 'base64').toString());\n\n// Check if workflow is ready for next agent\nif (workflowState.status !== 'in_progress') {\n  // Workflow is not in progress, skip\n  return [];\n}\n\n// Determine next agent from workflow state\nconst nextAgent = workflowState.next_agent;\nconst currentPhase = workflowState.current_phase;\nconst blogSlug = workflowState.blog_slug || 'blog-' + new Date().toISOString().split('T')[0];\nconst topic = workflowState.topic || 'general';\n\n// Map agent names to our workflow format\nconst agentMapping = {\n  'SEOAgent': 'SEOAgent',\n  'BlogAgent': 'BlogAgent',\n  'ReviewAgent': 'ReviewAgent',\n  'ImageAgent': 'ImageAgent',\n  'PublishingAgent': 'PublishingAgent'\n};\n\nconst mappedAgent = agentMapping[nextAgent];\n\nif (!mappedAgent) {\n  // Unknown agent, skip\n  return [];\n}\n\n// Prepare payload for multi-site router\nitem.site_name = $('Parse GitHub Webhook').first().json.site_name;\nitem.agent_name = mappedAgent;\nitem.blog_slug = blogSlug;\nitem.topic = topic;\nitem.current_phase = currentPhase;\n\nconsole.log(`Triggering next agent: ${mappedAgent} for ${blogSlug} in phase ${currentPhase}`);\n\nreturn item;"
+        "jsCode": "// Parse the workflow state\nconst workflowState = JSON.parse(Buffer.from($input.first().json.content, 'base64').toString());\n\n// Initialize item object\nconst item = {};\n\n// Check if workflow is ready for next agent\nif (workflowState.status !== 'in_progress') {\n  // Workflow is not in progress, skip\n  return [];\n}\n\n// Determine next agent from workflow state\nconst nextAgent = workflowState.next_agent;\nconst currentPhase = workflowState.current_phase;\nconst blogSlug = workflowState.blog_slug || 'blog-' + new Date().toISOString().split('T')[0];\nconst topic = workflowState.topic || 'general';\n\n// Map agent names to our workflow format\nconst agentMapping = {\n  'SEOAgent': 'SEOAgent',\n  'BlogAgent': 'BlogAgent',\n  'ReviewAgent': 'ReviewAgent',\n  'ImageAgent': 'ImageAgent',\n  'PublishingAgent': 'PublishingAgent'\n};\n\nconst mappedAgent = agentMapping[nextAgent];\n\nif (!mappedAgent) {\n  // Unknown agent, skip\n  return [];\n}\n\n// Prepare payload for multi-site router\nitem.site_name = $('Parse GitHub Webhook').first().json.site_name;\nitem.agent_name = mappedAgent;\nitem.blog_slug = blogSlug;\nitem.topic = topic;\nitem.current_phase = currentPhase;\n\nconsole.log(`Triggering next agent: ${mappedAgent} for ${blogSlug} in phase ${currentPhase}`);\n\nreturn item;"
       },
       "id": "determine-next-agent",
       "name": "Determine Next Agent",
-      "type": "n8n-nodes-base.function",
-      "typeVersion": 1,
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
       "position": [900, 300]
     },
     {
@@ -161,7 +161,13 @@
       ]
     }
   },
-  "active": true,
-  "settings": {},
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2024-01-15T10:00:00.000Z",
   "versionId": "1"
 } 
