@@ -20,56 +20,7 @@ Generate and optimize high-quality images for blog content using GPT-4 image gen
 
 ## 🔄 Workflow Steps
 
-### 1. Load Blog Content and Data
-```bash
-# Load final blog content and metadata
-const fs = require('fs').promises;
-const blogContent = await fs.readFile('blog-final.md', 'utf8');
-const workflowState = JSON.parse(await fs.readFile('workflow_state.json', 'utf8'));
-```
-
-### 2. Extract Content Information
-- Parse blog title and description from content
-- Extract key themes and visual elements
-- Identify content type and target audience
-- Prepare content context for image prompt generation
-
-### 3. Generate Image Prompts
-Create stylized prompts for each image type following BrightGift guidelines:
-
-#### **Banner Image Prompt:**
-- **Dimensions**: 16:9 ratio, 1200px wide
-- **Content**: No visible text or logos
-- **Style**: Physical object-based scenes (gifts, home goods, accessories)
-- **Layout**: Flat-lay, stacked boxes, tidy clusters, or centered scenes
-- **BrightGift Style**: Include the complete BrightGift Style Signature
-
-#### **Open Graph Image Prompt:**
-- **Dimensions**: 16:9 ratio, 1200px wide  
-- **Content**: No visible text or logos
-- **Style**: Physical object-based scenes matching content theme
-- **Layout**: Clean, giftable layout with rounded forms and balanced negative space
-- **BrightGift Style**: Include the complete BrightGift Style Signature
-
-### 4. Generate Images with GPT-4
-- **Banner Image**: Generate using gpt-image-1 model with banner prompt
-- **OG Image**: Generate using gpt-image-1 model with OG prompt
-- **Quality Control**: Ensure images meet BrightGift style requirements
-- **Error Handling**: Retry generation if images don't meet quality standards
-
-### 5. Optimize and Enhance Images
-- **Image Enhancement**: Improve quality, contrast, and visual appeal
-- **Web Optimization**: Compress for fast loading while maintaining quality
-- **Format Optimization**: Ensure proper WebP format for web performance
-- **Quality Validation**: Verify images meet all technical requirements
-
-### 6. Convert and Save Images
-- **Banner Image**: Save as `banner.webp` in optimized format
-- **OG Image**: Save as `og.webp` and convert to `og.jpg` for platform compatibility
-- **File Organization**: Store in `images/` directory with proper naming
-- **Metadata**: Create image metadata file with prompts and generation details
-
-### 7. Parse Input Parameters and Load Data
+### 1. Parse Input Parameters and Load Data
 ```javascript
 // Extract parameters from the command
 const blogSlug = process.argv[2] || 'blog-' + new Date().toISOString().split('T')[0];
@@ -97,7 +48,34 @@ const workflowState = JSON.parse(fs.readFileSync(workflowStatePath, 'utf8'));
 console.log('Loaded blog final content and workflow state');
 ```
 
-### 8. Generate and Process Images
+### 2. Extract Content Information
+- Parse blog title and description from content
+- Extract key themes and visual elements
+- Identify content type and target audience
+- Prepare content context for image prompt generation
+
+### 3. Generate Image Prompts
+Create stylized prompts for each image type following BrightGift guidelines.
+
+### 4. Generate Images with GPT-4
+- **Banner Image**: Generate using gpt-image-1 model with banner prompt
+- **OG Image**: Generate using gpt-image-1 model with OG prompt
+- **Quality Control**: Ensure images meet BrightGift style requirements
+- **Error Handling**: Retry generation if images don't meet quality standards
+
+### 5. Optimize and Enhance Images
+- **Image Enhancement**: Improve quality, contrast, and visual appeal
+- **Web Optimization**: Compress for fast loading while maintaining quality
+- **Format Optimization**: Ensure proper WebP format for web performance
+- **Quality Validation**: Verify images meet all technical requirements
+
+### 6. Convert and Save Images
+- **Banner Image**: Save as `banner.webp` in optimized format
+- **OG Image**: Save as `og.webp` and convert to `og.jpg` for platform compatibility
+- **File Organization**: Store in `images/` directory with proper naming
+- **Metadata**: Create image metadata file with prompts and generation details
+
+### 7. Generate and Process Images
 ```javascript
 // Generate image prompts based on content
 const imagePrompts = generateImagePrompts(blogContent, topic);
@@ -131,7 +109,7 @@ fs.writeFileSync(imagePromptsPath, JSON.stringify(imagePrompts, null, 2));
 console.log(`Images saved to: ${imagesDir}`);
 ```
 
-### 9. Update Workflow State
+### 8. Update Workflow State
 ```javascript
 // Update workflow state with image completion
 workflowState.current_phase = "IMAGE_COMPLETE";
@@ -159,7 +137,7 @@ fs.writeFileSync(workflowStatePath, JSON.stringify(workflowState, null, 2));
 console.log(`Workflow state updated: ${workflowStatePath}`);
 ```
 
-### 10. Commit Changes to GitHub
+### 9. Commit Changes to GitHub
 ```javascript
 // Commit all changes to trigger next agent
 const { execSync } = require('child_process');
@@ -184,7 +162,7 @@ try {
 }
 ```
 
-### 11. Trigger Next Agent
+### 10. Trigger Next Agent
 The GitHub commit above will automatically trigger the GitHub webhook, which will then trigger the next agent (PublishingAgent) via n8n.
 
 ## 📁 Output Files
@@ -259,3 +237,25 @@ The GitHub commit above will automatically trigger the GitHub webhook, which wil
 - **Error Handling**: Retry generation if images don't meet quality standards
 - **Brand Alignment**: Maintain consistent BrightGift visual identity
 - **Technical Excellence**: Optimize for web performance and user experience 
+
+## 🔧 Helper Function Documentation
+
+### **generateImagePrompts(blogContent, topic)**
+```javascript
+// Should return an object with { banner: string, og: string }
+```
+
+### **generateImage(prompt, type)**
+```javascript
+// Should return a Buffer or image data for the generated image
+```
+
+### **optimizeImage(image, type)**
+```javascript
+// Should return a Buffer or optimized image data
+```
+
+### **convertToJpg(image)**
+```javascript
+// Should return a Buffer or JPG image data
+``` 

@@ -38,13 +38,34 @@ Comprehensive content review, optimization, and validation agent that serves as 
 
 ## 🔄 Workflow Steps
 
-### 1. Load Content and Data
-```bash
-# Load all required files and data
-const fs = require('fs').promises;
-const blogDraft = await fs.readFile('blog-draft.md', 'utf8');
-const seoResults = JSON.parse(await fs.readFile('seo-results.json', 'utf8'));
-const workflowState = JSON.parse(await fs.readFile('workflow_state.json', 'utf8'));
+### 1. Parse Input Parameters and Load Data
+```javascript
+// Extract parameters from the command
+const blogSlug = process.argv[2] || 'blog-' + new Date().toISOString().split('T')[0];
+const topic = process.argv[3] || 'general';
+const phase = process.argv[4] || 'REVIEW';
+const site = process.argv[5] || 'brightgift';
+
+console.log(`Review Agent starting for: ${blogSlug}, topic: ${topic}, site: ${site}`);
+
+// Load content and data
+const contentDir = `content/blog-posts/${blogSlug}`;
+const fs = require('fs');
+const path = require('path');
+
+const blogDraftPath = path.join(contentDir, 'blog-draft.md');
+const seoResultsPath = path.join(contentDir, 'seo-results.json');
+const workflowStatePath = path.join(contentDir, 'workflow_state.json');
+
+if (!fs.existsSync(blogDraftPath)) {
+  throw new Error(`Blog draft not found at: ${blogDraftPath}`);
+}
+
+const blogDraft = fs.readFileSync(blogDraftPath, 'utf8');
+const seoResults = JSON.parse(fs.readFileSync(seoResultsPath, 'utf8'));
+const workflowState = JSON.parse(fs.readFileSync(workflowStatePath, 'utf8'));
+
+console.log('Loaded blog draft, SEO results, and workflow state');
 ```
 
 ### 2. Duplicate Content Prevention
@@ -105,37 +126,7 @@ const workflowState = JSON.parse(await fs.readFile('workflow_state.json', 'utf8'
 - **Recommendations**: Provide specific recommendations for future content
 - **Quality Metrics**: Track word count, keyword usage, and engagement factors
 
-### 10. Parse Input Parameters and Load Data
-```javascript
-// Extract parameters from the command
-const blogSlug = process.argv[2] || 'blog-' + new Date().toISOString().split('T')[0];
-const topic = process.argv[3] || 'general';
-const phase = process.argv[4] || 'REVIEW';
-const site = process.argv[5] || 'brightgift';
-
-console.log(`Review Agent starting for: ${blogSlug}, topic: ${topic}, site: ${site}`);
-
-// Load content and data
-const contentDir = `content/blog-posts/${blogSlug}`;
-const fs = require('fs');
-const path = require('path');
-
-const blogDraftPath = path.join(contentDir, 'blog-draft.md');
-const seoResultsPath = path.join(contentDir, 'seo-results.json');
-const workflowStatePath = path.join(contentDir, 'workflow_state.json');
-
-if (!fs.existsSync(blogDraftPath)) {
-  throw new Error(`Blog draft not found at: ${blogDraftPath}`);
-}
-
-const blogDraft = fs.readFileSync(blogDraftPath, 'utf8');
-const seoResults = JSON.parse(fs.readFileSync(seoResultsPath, 'utf8'));
-const workflowState = JSON.parse(fs.readFileSync(workflowStatePath, 'utf8'));
-
-console.log('Loaded blog draft, SEO results, and workflow state');
-```
-
-### 11. Perform Comprehensive Review
+### 10. Perform Comprehensive Review
 ```javascript
 // Perform all review steps
 const reviewResults = performComprehensiveReview(blogDraft, seoResults);
@@ -149,7 +140,7 @@ fs.writeFileSync(blogFinalPath, finalContent);
 console.log(`Final blog content saved to: ${blogFinalPath}`);
 ```
 
-### 12. Update Workflow State
+### 11. Update Workflow State
 ```javascript
 // Update workflow state with review completion
 workflowState.current_phase = "REVIEW_COMPLETE";
@@ -180,7 +171,7 @@ fs.writeFileSync(workflowStatePath, JSON.stringify(workflowState, null, 2));
 console.log(`Workflow state updated: ${workflowStatePath}`);
 ```
 
-### 13. Commit Changes to GitHub
+### 12. Commit Changes to GitHub
 ```javascript
 // Commit all changes to trigger next agent
 const { execSync } = require('child_process');
@@ -205,5 +196,24 @@ try {
 }
 ```
 
-### 14. Trigger Next Agent
-The GitHub commit above will automatically trigger the GitHub webhook, which will then trigger the next agent (ImageAgent) via n8n. 
+### 13. Trigger Next Agent
+The GitHub commit above will automatically trigger the GitHub webhook, which will then trigger the next agent (ImageAgent) via n8n.
+
+## 🔧 Helper Function Documentation
+
+### **performComprehensiveReview(blogDraft, seoResults)**
+```javascript
+// Helper: performComprehensiveReview(blogDraft, seoResults)
+// Should return an object with:
+// {
+//   optimizedContent: string,
+//   optimizationScore: number,
+//   wordCount: number,
+//   keywordCoverage: string,
+//   affiliateLinkCount: number,
+//   internalLinkCount: number,
+//   duplicateCheckResult: string,
+//   contentType: string,
+//   qualityNotes: array
+// }
+``` 
