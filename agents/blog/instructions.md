@@ -96,38 +96,108 @@ Create content following the standard structure:
 - **Internal Linking**: Automatically suggest relevant internal links
 - **Tone**: Friendly but professional, helpful expert, inclusive
 
-### 6. Update Workflow State
-```json
-{
-  "current_phase": "BLOG_COMPLETE",
-  "next_agent": "ReviewAgent",
-  "agent_outputs": {
-    "SEOAgent": "seo-results.json",
-    "BlogAgent": "blog-draft.md"
+### 6. Parse Input Parameters and Load Data
+```javascript
+// Extract parameters from the command
+const blogSlug = process.argv[2] || 'blog-' + new Date().toISOString().split('T')[0];
+const topic = process.argv[3] || 'general';
+const phase = process.argv[4] || 'BLOG';
+const site = process.argv[5] || 'brightgift';
+
+console.log(`Blog Agent starting for: ${blogSlug}, topic: ${topic}, site: ${site}`);
+
+// Load SEO results and workflow state
+const contentDir = `content/blog-posts/${blogSlug}`;
+const fs = require('fs');
+const path = require('path');
+
+const seoResultsPath = path.join(contentDir, 'seo-results.json');
+const workflowStatePath = path.join(contentDir, 'workflow_state.json');
+
+if (!fs.existsSync(seoResultsPath)) {
+  throw new Error(`SEO results not found at: ${seoResultsPath}`);
+}
+
+const seoResults = JSON.parse(fs.readFileSync(seoResultsPath, 'utf8'));
+const workflowState = JSON.parse(fs.readFileSync(workflowStatePath, 'utf8'));
+
+console.log('Loaded SEO results and workflow state');
+```
+
+### 7. Generate Blog Content
+```javascript
+// Generate blog content based on SEO research
+const blogContent = generateBlogContent(seoResults, topic);
+
+// Save blog draft to file
+const blogDraftPath = path.join(contentDir, 'blog-draft.md');
+fs.writeFileSync(blogDraftPath, blogContent);
+console.log(`Blog draft saved to: ${blogDraftPath}`);
+```
+
+### 8. Update Workflow State
+```javascript
+// Update workflow state with blog completion
+workflowState.current_phase = "BLOG_COMPLETE";
+workflowState.next_agent = "ReviewAgent";
+workflowState.last_updated = new Date().toISOString();
+workflowState.updated_at = new Date().toISOString();
+workflowState.agents_run.push("BlogAgent");
+workflowState.agent_outputs["BlogAgent"] = "blog-draft.md";
+
+// Add blog metadata
+workflowState.blog_metadata = {
+  word_count: countWords(blogContent),
+  content_type: determineContentType(seoResults),
+  affiliate_products: {
+    amazon: countAffiliateLinks(blogContent, 'amazon'),
+    bookshop: countAffiliateLinks(blogContent, 'bookshop'),
+    afrofiliate: countAffiliateLinks(blogContent, 'afrofiliate')
   },
-  "blog_metadata": {
-    "word_count": 1500,
-    "content_type": "gift_guide",
-    "affiliate_products": {
-      "amazon": 8,
-      "bookshop": 2,
-      "afrofiliate": 3
-    },
-    "internal_links": 3,
-    "target_keywords": ["gift ideas for parents", "thoughtful gifts", "parent gifts"]
-  },
-  "last_updated": "2025-01-XXTXX:XX:XXZ"
+  internal_links: countInternalLinks(blogContent),
+  target_keywords: seoResults.keywordAnalysis.map(k => k.keyword)
+};
+
+// Update timestamps
+workflowState.timestamps.blog_started = workflowState.timestamps.blog_started || new Date().toISOString();
+workflowState.timestamps.blog_completed = new Date().toISOString();
+
+// Save updated workflow state
+fs.writeFileSync(workflowStatePath, JSON.stringify(workflowState, null, 2));
+console.log(`Workflow state updated: ${workflowStatePath}`);
+```
+
+### 9. Commit Changes to GitHub
+```javascript
+// Commit all changes to trigger next agent
+const { execSync } = require('child_process');
+
+try {
+  // Add all files to git
+  execSync('git add .', { cwd: process.cwd(), stdio: 'inherit' });
+  console.log('Files added to git');
+  
+  // Commit changes
+  const commitMessage = `Blog Agent: Complete draft for ${blogSlug} - ${topic}`;
+  execSync(`git commit -m "${commitMessage}"`, { cwd: process.cwd(), stdio: 'inherit' });
+  console.log('Changes committed to git');
+  
+  // Push to trigger GitHub webhook
+  execSync('git push', { cwd: process.cwd(), stdio: 'inherit' });
+  console.log('Changes pushed to GitHub');
+  
+} catch (error) {
+  console.error('Git operations failed:', error.message);
+  // Continue execution even if git fails
 }
 ```
 
-### 7. Trigger Next Agent
-- Commit `blog-draft.md` and updated `workflow_state.json`
-- Send Slack command to trigger Review Agent
-- Log completion in agent logs
+### 10. Trigger Next Agent
+The GitHub commit above will automatically trigger the GitHub webhook, which will then trigger the next agent (ReviewAgent) via n8n.
 
 ## 📁 Output Files
-- `blog-draft.md` - Generated blog content in markdown format
-- `workflow_state.json` - Updated state with blog completion and next agent
+- `content/blog-posts/{blogSlug}/blog-draft.md` - Generated blog content in markdown format
+- `content/blog-posts/{blogSlug}/workflow_state.json` - Updated state with blog completion and next agent
 
 ## 🎯 Success Criteria
 - ✅ Generated blog draft with 1,200+ words
@@ -136,7 +206,7 @@ Create content following the standard structure:
 - ✅ Proper structure and formatting with H2/H3 headers
 - ✅ Engaging and valuable content with practical tips
 - ✅ Suggested internal links to related content
-- ✅ Updated workflow state and triggered next agent
+- ✅ Updated workflow state and triggered next agent via GitHub commit
 
 ## 🔧 Configuration
 - **Cursor Agent**: Configured for content generation

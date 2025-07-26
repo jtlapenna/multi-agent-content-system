@@ -69,39 +69,130 @@ Create stylized prompts for each image type following BrightGift guidelines:
 - **File Organization**: Store in `images/` directory with proper naming
 - **Metadata**: Create image metadata file with prompts and generation details
 
-### 7. Update Workflow State
-```json
-{
-  "current_phase": "IMAGE_COMPLETE",
-  "next_agent": "PublishingAgent",
-  "agent_outputs": {
-    "SEOAgent": "seo-results.json",
-    "BlogAgent": "blog-draft.md",
-    "ReviewAgent": "blog-final.md",
-    "ImageAgent": "images/"
-  },
-  "image_metadata": {
-    "banner_image": "images/banner.webp",
-    "og_image": "images/og.webp",
-    "og_image_jpg": "images/og.jpg",
-    "image_prompts": "images/image-prompts.json",
-    "generation_time": "2025-01-XXTXX:XX:XXZ"
-  },
-  "last_updated": "2025-01-XXTXX:XX:XXZ"
+### 7. Parse Input Parameters and Load Data
+```javascript
+// Extract parameters from the command
+const blogSlug = process.argv[2] || 'blog-' + new Date().toISOString().split('T')[0];
+const topic = process.argv[3] || 'general';
+const phase = process.argv[4] || 'IMAGE';
+const site = process.argv[5] || 'brightgift';
+
+console.log(`Image Agent starting for: ${blogSlug}, topic: ${topic}, site: ${site}`);
+
+// Load content and data
+const contentDir = `content/blog-posts/${blogSlug}`;
+const fs = require('fs');
+const path = require('path');
+
+const blogFinalPath = path.join(contentDir, 'blog-final.md');
+const workflowStatePath = path.join(contentDir, 'workflow_state.json');
+
+if (!fs.existsSync(blogFinalPath)) {
+  throw new Error(`Blog final content not found at: ${blogFinalPath}`);
+}
+
+const blogContent = fs.readFileSync(blogFinalPath, 'utf8');
+const workflowState = JSON.parse(fs.readFileSync(workflowStatePath, 'utf8'));
+
+console.log('Loaded blog final content and workflow state');
+```
+
+### 8. Generate and Process Images
+```javascript
+// Generate image prompts based on content
+const imagePrompts = generateImagePrompts(blogContent, topic);
+
+// Generate images using GPT-4
+const bannerImage = await generateImage(imagePrompts.banner, 'banner');
+const ogImage = await generateImage(imagePrompts.og, 'og');
+
+// Optimize and enhance images
+const optimizedBanner = await optimizeImage(bannerImage, 'banner');
+const optimizedOG = await optimizeImage(ogImage, 'og');
+
+// Convert OG image to JPG for compatibility
+const ogImageJpg = await convertToJpg(optimizedOG);
+
+// Create images directory
+const imagesDir = path.join(contentDir, 'images');
+if (!fs.existsSync(imagesDir)) {
+  fs.mkdirSync(imagesDir, { recursive: true });
+}
+
+// Save all images
+fs.writeFileSync(path.join(imagesDir, 'banner.webp'), optimizedBanner);
+fs.writeFileSync(path.join(imagesDir, 'og.webp'), optimizedOG);
+fs.writeFileSync(path.join(imagesDir, 'og.jpg'), ogImageJpg);
+
+// Save image prompts metadata
+const imagePromptsPath = path.join(imagesDir, 'image-prompts.json');
+fs.writeFileSync(imagePromptsPath, JSON.stringify(imagePrompts, null, 2));
+
+console.log(`Images saved to: ${imagesDir}`);
+```
+
+### 9. Update Workflow State
+```javascript
+// Update workflow state with image completion
+workflowState.current_phase = "IMAGE_COMPLETE";
+workflowState.next_agent = "PublishingAgent";
+workflowState.last_updated = new Date().toISOString();
+workflowState.updated_at = new Date().toISOString();
+workflowState.agents_run.push("ImageAgent");
+workflowState.agent_outputs["ImageAgent"] = "images/";
+
+// Add image metadata
+workflowState.image_metadata = {
+  banner_image: "images/banner.webp",
+  og_image: "images/og.webp",
+  og_image_jpg: "images/og.jpg",
+  image_prompts: "images/image-prompts.json",
+  generation_time: new Date().toISOString()
+};
+
+// Update timestamps
+workflowState.timestamps.image_started = workflowState.timestamps.image_started || new Date().toISOString();
+workflowState.timestamps.image_completed = new Date().toISOString();
+
+// Save updated workflow state
+fs.writeFileSync(workflowStatePath, JSON.stringify(workflowState, null, 2));
+console.log(`Workflow state updated: ${workflowStatePath}`);
+```
+
+### 10. Commit Changes to GitHub
+```javascript
+// Commit all changes to trigger next agent
+const { execSync } = require('child_process');
+
+try {
+  // Add all files to git
+  execSync('git add .', { cwd: process.cwd(), stdio: 'inherit' });
+  console.log('Files added to git');
+  
+  // Commit changes
+  const commitMessage = `Image Agent: Complete image generation for ${blogSlug} - ${topic}`;
+  execSync(`git commit -m "${commitMessage}"`, { cwd: process.cwd(), stdio: 'inherit' });
+  console.log('Changes committed to git');
+  
+  // Push to trigger GitHub webhook
+  execSync('git push', { cwd: process.cwd(), stdio: 'inherit' });
+  console.log('Changes pushed to GitHub');
+  
+} catch (error) {
+  console.error('Git operations failed:', error.message);
+  // Continue execution even if git fails
 }
 ```
 
-### 8. Trigger Next Agent
-- Commit image files and updated `workflow_state.json`
-- Send Slack command to trigger Publishing Agent
-- Log completion in agent logs
+### 11. Trigger Next Agent
+The GitHub commit above will automatically trigger the GitHub webhook, which will then trigger the next agent (PublishingAgent) via n8n.
 
 ## 📁 Output Files
-- `images/banner.webp` - Optimized banner image (16:9, 1200px wide)
-- `images/og.webp` - Optimized Open Graph image (16:9, 1200px wide)
-- `images/og.jpg` - JPG version of OG image for platform compatibility
-- `images/image-prompts.json` - Image generation metadata and prompts
-- `workflow_state.json` - Updated state with image completion
+- `content/blog-posts/{blogSlug}/images/banner.webp` - Optimized banner image (16:9, 1200px wide)
+- `content/blog-posts/{blogSlug}/images/og.webp` - Optimized Open Graph image (16:9, 1200px wide)
+- `content/blog-posts/{blogSlug}/images/og.jpg` - JPG version of OG image for platform compatibility
+- `content/blog-posts/{blogSlug}/images/image-prompts.json` - Image generation metadata and prompts
+- `content/blog-posts/{blogSlug}/workflow_state.json` - Updated state with image completion
 
 ## 🎯 Success Criteria
 - ✅ Generated high-quality banner image following BrightGift style
@@ -109,7 +200,7 @@ Create stylized prompts for each image type following BrightGift guidelines:
 - ✅ Images optimized for web performance and loading speed
 - ✅ OG image converted to JPG format for platform compatibility
 - ✅ All images meet technical specifications and brand guidelines
-- ✅ Updated workflow state and triggered next agent
+- ✅ Updated workflow state and triggered next agent via GitHub commit
 
 ## 🔧 Configuration
 - **GPT-4 Image Model**: gpt-image-1 for image generation

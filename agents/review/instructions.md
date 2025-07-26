@@ -21,6 +21,21 @@ Comprehensive content review, optimization, and validation agent that serves as 
 - **Workflow State**: `workflow_state.json` - State management and agent handoff
 - **Existing Content API**: Check for duplicates and content balance
 
+## 📁 Output Files
+- `content/blog-posts/{blogSlug}/blog-final.md` - Fully optimized and validated blog content
+- `content/blog-posts/{blogSlug}/workflow_state.json` - Updated state with comprehensive review metadata
+- Review notes and quality metrics
+
+## 🎯 Success Criteria
+- ✅ **Content Quality**: Comprehensive review completed with optimization score ≥80
+- ✅ **SEO Optimization**: All target keywords properly integrated and optimized
+- ✅ **Readability**: Content optimized for target reading level and engagement
+- ✅ **Affiliate Validation**: All affiliate links verified and properly formatted
+- ✅ **Duplicate Prevention**: Content checked against existing posts
+- ✅ **Structure Enhancement**: Proper formatting, headers, and organization
+- ✅ **Performance Ready**: Content optimized for search and user engagement
+- ✅ **Updated Workflow State**: Comprehensive metadata and next agent triggered via GitHub commit
+
 ## 🔄 Workflow Steps
 
 ### 1. Load Content and Data
@@ -90,123 +105,105 @@ const workflowState = JSON.parse(await fs.readFile('workflow_state.json', 'utf8'
 - **Recommendations**: Provide specific recommendations for future content
 - **Quality Metrics**: Track word count, keyword usage, and engagement factors
 
-### 10. Update Workflow State
-```json
-{
-  "current_phase": "REVIEW_COMPLETE",
-  "next_agent": "ImageAgent",
-  "agent_outputs": {
-    "SEOAgent": "seo-results.json",
-    "BlogAgent": "blog-draft.md",
-    "ReviewAgent": "blog-final.md"
-  },
-  "review_metadata": {
-    "optimization_score": 85,
-    "word_count": 1500,
-    "keyword_coverage": "8/10",
-    "affiliate_links": 12,
-    "internal_links": 3,
-    "duplicate_check": "passed",
-    "content_type": "gift_guide",
-    "quality_notes": [...]
-  },
-  "last_updated": "2025-01-XXTXX:XX:XXZ"
+### 10. Parse Input Parameters and Load Data
+```javascript
+// Extract parameters from the command
+const blogSlug = process.argv[2] || 'blog-' + new Date().toISOString().split('T')[0];
+const topic = process.argv[3] || 'general';
+const phase = process.argv[4] || 'REVIEW';
+const site = process.argv[5] || 'brightgift';
+
+console.log(`Review Agent starting for: ${blogSlug}, topic: ${topic}, site: ${site}`);
+
+// Load content and data
+const contentDir = `content/blog-posts/${blogSlug}`;
+const fs = require('fs');
+const path = require('path');
+
+const blogDraftPath = path.join(contentDir, 'blog-draft.md');
+const seoResultsPath = path.join(contentDir, 'seo-results.json');
+const workflowStatePath = path.join(contentDir, 'workflow_state.json');
+
+if (!fs.existsSync(blogDraftPath)) {
+  throw new Error(`Blog draft not found at: ${blogDraftPath}`);
+}
+
+const blogDraft = fs.readFileSync(blogDraftPath, 'utf8');
+const seoResults = JSON.parse(fs.readFileSync(seoResultsPath, 'utf8'));
+const workflowState = JSON.parse(fs.readFileSync(workflowStatePath, 'utf8'));
+
+console.log('Loaded blog draft, SEO results, and workflow state');
+```
+
+### 11. Perform Comprehensive Review
+```javascript
+// Perform all review steps
+const reviewResults = performComprehensiveReview(blogDraft, seoResults);
+
+// Generate optimized final content
+const finalContent = reviewResults.optimizedContent;
+
+// Save final blog content
+const blogFinalPath = path.join(contentDir, 'blog-final.md');
+fs.writeFileSync(blogFinalPath, finalContent);
+console.log(`Final blog content saved to: ${blogFinalPath}`);
+```
+
+### 12. Update Workflow State
+```javascript
+// Update workflow state with review completion
+workflowState.current_phase = "REVIEW_COMPLETE";
+workflowState.next_agent = "ImageAgent";
+workflowState.last_updated = new Date().toISOString();
+workflowState.updated_at = new Date().toISOString();
+workflowState.agents_run.push("ReviewAgent");
+workflowState.agent_outputs["ReviewAgent"] = "blog-final.md";
+
+// Add review metadata
+workflowState.review_metadata = {
+  optimization_score: reviewResults.optimizationScore,
+  word_count: reviewResults.wordCount,
+  keyword_coverage: reviewResults.keywordCoverage,
+  affiliate_links: reviewResults.affiliateLinkCount,
+  internal_links: reviewResults.internalLinkCount,
+  duplicate_check: reviewResults.duplicateCheckResult,
+  content_type: reviewResults.contentType,
+  quality_notes: reviewResults.qualityNotes
+};
+
+// Update timestamps
+workflowState.timestamps.review_started = workflowState.timestamps.review_started || new Date().toISOString();
+workflowState.timestamps.review_completed = new Date().toISOString();
+
+// Save updated workflow state
+fs.writeFileSync(workflowStatePath, JSON.stringify(workflowState, null, 2));
+console.log(`Workflow state updated: ${workflowStatePath}`);
+```
+
+### 13. Commit Changes to GitHub
+```javascript
+// Commit all changes to trigger next agent
+const { execSync } = require('child_process');
+
+try {
+  // Add all files to git
+  execSync('git add .', { cwd: process.cwd(), stdio: 'inherit' });
+  console.log('Files added to git');
+  
+  // Commit changes
+  const commitMessage = `Review Agent: Complete optimization for ${blogSlug} - ${topic}`;
+  execSync(`git commit -m "${commitMessage}"`, { cwd: process.cwd(), stdio: 'inherit' });
+  console.log('Changes committed to git');
+  
+  // Push to trigger GitHub webhook
+  execSync('git push', { cwd: process.cwd(), stdio: 'inherit' });
+  console.log('Changes pushed to GitHub');
+  
+} catch (error) {
+  console.error('Git operations failed:', error.message);
+  // Continue execution even if git fails
 }
 ```
 
-### 11. Trigger Next Agent
-- Commit `blog-final.md` and updated `workflow_state.json`
-- Send Slack command to trigger Image Agent
-- Log completion in agent logs
-
-## 📁 Output Files
-- `blog-final.md` - Fully optimized and validated blog content
-- `workflow_state.json` - Updated state with comprehensive review metadata
-- Review notes and quality metrics
-
-## 🎯 Success Criteria
-- ✅ **Content Quality**: Comprehensive review completed with optimization score ≥80
-- ✅ **SEO Optimization**: All target keywords properly integrated and optimized
-- ✅ **Readability**: Content optimized for target reading level and engagement
-- ✅ **Affiliate Validation**: All affiliate links verified and properly formatted
-- ✅ **Duplicate Prevention**: Content checked against existing posts
-- ✅ **Structure Enhancement**: Proper formatting, headers, and organization
-- ✅ **Performance Ready**: Content optimized for search and user engagement
-- ✅ **Updated Workflow State**: Comprehensive metadata and next agent triggered
-
-## 🔧 Configuration
-- **Content Checker**: Configured for comprehensive validation and optimization
-- **SEO Integration**: Use data from SEO Agent for optimization
-- **Quality Standards**: Meet all content quality and performance requirements
-- **Review Process**: Comprehensive failsafe review checklist
-
-## 📝 Comprehensive Review Checklist
-
-### **Content Quality & Accuracy:**
-- [ ] All facts and data verified for accuracy
-- [ ] Product information and pricing current
-- [ ] Grammar and spelling errors corrected
-- [ ] Style consistency maintained throughout
-- [ ] Content provides genuine value to readers
-
-### **SEO Optimization:**
-- [ ] Target keywords naturally integrated
-- [ ] Proper keyword density (not overstuffed)
-- [ ] Header hierarchy optimized (H1 → H2 → H3)
-- [ ] Meta title and description prepared
-- [ ] Internal links verified and optimized
-- [ ] Schema markup suggestions provided
-
-### **Readability & Engagement:**
-- [ ] Word count meets minimum requirements (1,200+)
-- [ ] Reading level optimized for target audience
-- [ ] Paragraph structure improved for flow
-- [ ] Sentence variety and structure enhanced
-- [ ] Engaging hooks and transitions added
-- [ ] Effective call-to-action elements present
-
-### **Affiliate Integration:**
-- [ ] All affiliate links functional and properly formatted
-- [ ] Product descriptions accurate and compelling
-- [ ] Price ranges current and transparent
-- [ ] Natural distribution across affiliate platforms
-- [ ] Products genuinely relevant to content theme
-- [ ] Proper HTML formatting with target="_blank"
-
-### **Content Structure:**
-- [ ] Engaging introduction with clear value proposition
-- [ ] Logical content flow and organization
-- [ ] Clear section headers optimized for SEO
-- [ ] Strong conclusion with takeaways and CTA
-- [ ] Consistent markdown formatting throughout
-
-### **Technical Optimization:**
-- [ ] Mobile-friendly content structure
-- [ ] Fast-loading content optimization
-- [ ] Accessibility considerations addressed
-- [ ] Social sharing optimization
-- [ ] Analytics tracking preparation
-
-### **Duplicate Prevention:**
-- [ ] Content checked against existing blog posts
-- [ ] No duplicate topics or content identified
-- [ ] Content type balance maintained
-- [ ] Unique value proposition confirmed
-
-## 📊 Quality Metrics Tracking
-- **Optimization Score**: 0-100 based on comprehensive review
-- **Word Count**: Target 1,500+ words for comprehensive content
-- **Keyword Coverage**: Percentage of target keywords properly integrated
-- **Affiliate Link Count**: Number of verified affiliate links
-- **Internal Link Count**: Number of relevant internal links
-- **Readability Score**: Based on sentence structure and complexity
-- **Engagement Score**: Based on hooks, transitions, and CTAs
-
-## 📝 Notes
-- **Failsafe Approach**: This agent serves as the final quality gate before publishing
-- **Comprehensive Review**: Leave no aspect of content quality unchecked
-- **Optimization Focus**: Continuously improve content for both search and user engagement
-- **Quality Documentation**: Thoroughly document all findings and improvements
-- **Performance Ready**: Ensure content is optimized for all performance metrics
-- **Future Improvement**: Provide recommendations for ongoing content optimization
-- **Error Prevention**: Catch and fix any issues before content reaches the Image Agent 
+### 14. Trigger Next Agent
+The GitHub commit above will automatically trigger the GitHub webhook, which will then trigger the next agent (ImageAgent) via n8n. 

@@ -202,13 +202,207 @@ if (approvalStatus === 'approved') {
   - Archive content for review
   - Clean up preview branch
 
-### 12. Trigger Next Agent
-- Commit updated `workflow_state.json` with final publishing metadata
-- Send Slack command to trigger next agent (Social Agent disabled for now, but posts are ready for manual posting or future automation)
-- Log completion in agent logs
+### 12. Parse Input Parameters and Load Data
+```javascript
+// Extract parameters from the command
+const blogSlug = process.argv[2] || 'blog-' + new Date().toISOString().split('T')[0];
+const topic = process.argv[3] || 'general';
+const phase = process.argv[4] || 'PUBLISHING';
+const site = process.argv[5] || 'brightgift';
+
+console.log(`Publishing Agent starting for: ${blogSlug}, topic: ${topic}, site: ${site}`);
+
+// Load content and data
+const contentDir = `content/blog-posts/${blogSlug}`;
+const fs = require('fs');
+const path = require('path');
+
+const blogFinalPath = path.join(contentDir, 'blog-final.md');
+const workflowStatePath = path.join(contentDir, 'workflow_state.json');
+const imagesDir = path.join(contentDir, 'images');
+
+if (!fs.existsSync(blogFinalPath)) {
+  throw new Error(`Blog final content not found at: ${blogFinalPath}`);
+}
+
+const blogContent = fs.readFileSync(blogFinalPath, 'utf8');
+const workflowState = JSON.parse(fs.readFileSync(workflowStatePath, 'utf8'));
+
+console.log('Loaded blog final content and workflow state');
+```
+
+### 13. Generate Social Posts and Prepare Content
+```javascript
+// Generate platform-optimized social posts
+const socialPosts = generateSocialPosts(blogContent, topic);
+
+// Prepare blog content with social posts in frontmatter
+const blogContentWithSocial = prepareBlogContentWithSocial(blogContent, socialPosts);
+
+// Save updated blog content
+const blogPublishedPath = path.join(contentDir, 'blog-published.md');
+fs.writeFileSync(blogPublishedPath, blogContentWithSocial);
+console.log(`Blog content with social posts saved to: ${blogPublishedPath}`);
+```
+
+### 14. GitHub Operations
+```javascript
+// Create preview branch and upload content
+const githubAPI = new GitHubAPI();
+const branchName = `preview/${blogSlug}`;
+
+try {
+  // Create preview branch
+  await githubAPI.createBranch(branchName, 'main');
+  console.log(`Created preview branch: ${branchName}`);
+  
+  // Upload blog content
+  await githubAPI.uploadFile(branchName, `content/blog-posts/${blogSlug}/blog-published.md`, blogContentWithSocial);
+  console.log('Blog content uploaded to GitHub');
+  
+  // Upload images
+  const imageFiles = fs.readdirSync(imagesDir);
+  for (const imageFile of imageFiles) {
+    const imagePath = path.join(imagesDir, imageFile);
+    const imageContent = fs.readFileSync(imagePath);
+    await githubAPI.uploadFile(branchName, `content/blog-posts/${blogSlug}/images/${imageFile}`, imageContent);
+  }
+  console.log('Images uploaded to GitHub');
+  
+} catch (error) {
+  console.error('GitHub operations failed:', error.message);
+  throw error;
+}
+```
+
+### 15. Cloudflare Pages Deployment
+```javascript
+// Deploy to Cloudflare Pages
+const cloudflareAPI = new CloudflareAPI();
+
+try {
+  const deployment = await cloudflareAPI.deployPreview(branchName);
+  console.log(`Cloudflare deployment started: ${deployment.id}`);
+  
+  // Wait for deployment to complete
+  const deploymentStatus = await cloudflareAPI.waitForDeployment(deployment.id);
+  console.log(`Deployment status: ${deploymentStatus.status}`);
+  
+  if (deploymentStatus.status === 'success') {
+    const previewUrl = deploymentStatus.url;
+    console.log(`Preview URL: ${previewUrl}`);
+  } else {
+    throw new Error(`Deployment failed: ${deploymentStatus.status}`);
+  }
+  
+} catch (error) {
+  console.error('Cloudflare deployment failed:', error.message);
+  throw error;
+}
+```
+
+### 16. Create Pull Request
+```javascript
+// Create pull request
+try {
+  const pr = await githubAPI.createPullRequest({
+    title: `Publish: ${topic}`,
+    body: `## Blog Post: ${topic}\n\n**Preview URL:** ${previewUrl}\n\n**Content Type:** Blog post\n**Target Audience:** Gift shoppers\n\n### Social Posts Generated:\n- **X (Twitter):** ${socialPosts.x.substring(0, 100)}...\n- **Bluesky:** ${socialPosts.bluesky.substring(0, 100)}...\n- **Pinterest:** ${socialPosts.pinterest.substring(0, 100)}...\n- **Facebook:** ${socialPosts.facebook.substring(0, 100)}...\n- **Instagram:** ${socialPosts.instagram.substring(0, 100)}...\n\nReady for review and approval.`,
+    head: branchName,
+    base: 'main'
+  });
+  
+  console.log(`Pull request created: #${pr.number}`);
+  
+} catch (error) {
+  console.error('Pull request creation failed:', error.message);
+  throw error;
+}
+```
+
+### 17. Update Workflow State
+```javascript
+// Update workflow state with publishing completion
+workflowState.current_phase = "PUBLISHING_COMPLETE";
+workflowState.next_agent = "SocialAgent"; // Disabled for now
+workflowState.last_updated = new Date().toISOString();
+workflowState.updated_at = new Date().toISOString();
+workflowState.agents_run.push("PublishingAgent");
+workflowState.agent_outputs["PublishingAgent"] = "published/";
+
+// Add publishing metadata
+workflowState.publishing_metadata = {
+  preview_url: previewUrl,
+  pr_number: pr.number,
+  pr_url: pr.html_url,
+  branch_name: branchName,
+  deployment_id: deployment.id,
+  deployment_status: deploymentStatus.status,
+  approval_status: "pending",
+  content_files: ["blog-published.md", "banner.webp", "og.webp", "og.jpg"],
+  social_posts: socialPosts,
+  publish_time: new Date().toISOString()
+};
+
+// Update timestamps
+workflowState.timestamps.publishing_started = workflowState.timestamps.publishing_started || new Date().toISOString();
+workflowState.timestamps.publishing_completed = new Date().toISOString();
+
+// Save updated workflow state
+fs.writeFileSync(workflowStatePath, JSON.stringify(workflowState, null, 2));
+console.log(`Workflow state updated: ${workflowStatePath}`);
+```
+
+### 18. Send Approval Notification
+```javascript
+// Send approval notification
+const notificationService = new NotificationService();
+
+try {
+  await notificationService.sendApprovalNotification(
+    workflowState.publishing_metadata,
+    topic,
+    socialPosts
+  );
+  console.log('Approval notification sent');
+  
+} catch (error) {
+  console.error('Notification sending failed:', error.message);
+  // Continue execution even if notification fails
+}
+```
+
+### 19. Commit Changes to GitHub
+```javascript
+// Commit all changes to trigger next agent
+const { execSync } = require('child_process');
+
+try {
+  // Add all files to git
+  execSync('git add .', { cwd: process.cwd(), stdio: 'inherit' });
+  console.log('Files added to git');
+  
+  // Commit changes
+  const commitMessage = `Publishing Agent: Complete publishing for ${blogSlug} - ${topic}`;
+  execSync(`git commit -m "${commitMessage}"`, { cwd: process.cwd(), stdio: 'inherit' });
+  console.log('Changes committed to git');
+  
+  // Push to trigger GitHub webhook
+  execSync('git push', { cwd: process.cwd(), stdio: 'inherit' });
+  console.log('Changes pushed to GitHub');
+  
+} catch (error) {
+  console.error('Git operations failed:', error.message);
+  // Continue execution even if git fails
+}
+```
+
+### 20. Trigger Next Agent
+The GitHub commit above will automatically trigger the GitHub webhook, which will then trigger the next agent (SocialAgent) via n8n.
 
 ## 📁 Output Files
-- `workflow_state.json` - Updated state with comprehensive publishing metadata
+- `content/blog-posts/{blogSlug}/blog-published.md` - Blog content with social posts in frontmatter
+- `content/blog-posts/{blogSlug}/workflow_state.json` - Updated state with comprehensive publishing metadata
 - GitHub preview branch with all content and assets
 - Cloudflare Pages preview deployment
 - GitHub pull request with preview URL
@@ -223,7 +417,7 @@ if (approvalStatus === 'approved') {
 - ✅ **Approval Notification**: Comprehensive notification sent with all required information
 - ✅ **Approval Handling**: Proper monitoring and handling of approval/rejection decisions
 - ✅ **Live Publishing**: Successful merge to main and production deployment (if approved)
-- ✅ **Workflow State**: Comprehensive metadata updated and next agent triggered
+- ✅ **Workflow State**: Comprehensive metadata updated and next agent triggered via GitHub commit
 
 ## 🔧 Configuration
 - **GitHub Token**: Required for repository access and operations
