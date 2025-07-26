@@ -1,7 +1,7 @@
 # 🔧 n8n Workflow Configuration Guide
 
 ## 🎯 Overview
-You have 4 workflows imported. Now you need to configure each one to use your Slack credentials and set up the webhooks properly.
+You have 4 workflows imported with **proper Slack nodes** (not HTTP Request nodes). Now you need to configure each one to use your Slack credentials and set up the webhooks properly.
 
 ---
 
@@ -12,12 +12,12 @@ You have 4 workflows imported. Now you need to configure each one to use your Sl
 - **Purpose**: Initial trigger from dashboard
 
 ### **1.2 Configure Webhook Node**
-1. **Click on the "Webhook" node**
+1. **Click on the "Dashboard Webhook" node**
 2. **Copy the webhook URL**: `https://thepeakbeyond.app.n8n.cloud/webhook/dashboard-seo-trigger`
 3. **Save the workflow**
 
 ### **1.3 Configure Slack Node**
-1. **Click on the "Send to #brightgift-seo-agent" node**
+1. **Click on the "Send to #brightgift-seo-agent" node** (this should show the Slack logo, not a globe)
 2. **In "Authentication" field**: Select your "BrightGift Slack Bot" credential
 3. **Channel**: Should be `C097J4EGEN9` (already configured)
 4. **Save the workflow**
@@ -35,12 +35,12 @@ You have 4 workflows imported. Now you need to configure each one to use your Sl
 - **Purpose**: Routes between agents
 
 ### **2.2 Configure Webhook Node**
-1. **Click on the "Webhook" node**
+1. **Click on the "Agent Router Webhook" node**
 2. **Copy the webhook URL**: `https://thepeakbeyond.app.n8n.cloud/webhook/agent-router`
 3. **Save the workflow**
 
 ### **2.3 Configure Slack Node**
-1. **Click on the "Send to [Channel]" node**
+1. **Click on the "Send to [Channel]" node** (this should show the Slack logo)
 2. **In "Authentication" field**: Select your "BrightGift Slack Bot" credential
 3. **Save the workflow**
 
@@ -56,12 +56,12 @@ You have 4 workflows imported. Now you need to configure each one to use your Sl
 - **Purpose**: Triggers after human approval
 
 ### **3.2 Configure Webhook Node**
-1. **Click on the "Webhook" node**
+1. **Click on the "Publishing Approval Webhook" node**
 2. **Copy the webhook URL**: `https://thepeakbeyond.app.n8n.cloud/webhook/publishing-approval`
 3. **Save the workflow**
 
 ### **3.3 Configure Slack Node**
-1. **Click on the "Send to #brightgift-publishing-agent" node**
+1. **Click on the "Send to #brightgift-publishing-agent" node** (this should show the Slack logo)
 2. **In "Authentication" field**: Select your "BrightGift Slack Bot" credential
 3. **Channel**: Should be `C097J4WA0LD` (already configured)
 4. **Save the workflow**
@@ -78,12 +78,12 @@ You have 4 workflows imported. Now you need to configure each one to use your Sl
 - **Purpose**: Listens for GitHub push events
 
 ### **4.2 Configure Webhook Node**
-1. **Click on the "Webhook" node**
+1. **Click on the "GitHub Webhook Trigger" node**
 2. **Copy the webhook URL**: `https://thepeakbeyond.app.n8n.cloud/webhook/github-webhook`
 3. **Save the workflow**
 
 ### **4.3 Configure HTTP Request Node**
-1. **Click on the "Trigger Next Agent" node**
+1. **Click on the "Trigger Next Agent" node** (this one stays as HTTP Request - it calls another n8n workflow)
 2. **URL should be**: `https://thepeakbeyond.app.n8n.cloud/webhook/agent-router`
 3. **Method**: `POST`
 4. **Save the workflow**
@@ -169,5 +169,13 @@ After testing, you should see:
 2. **Agent router** → Message in appropriate agent channel
 3. **Publishing approval** → Message in `#brightgift-publishing-agent`
 4. **GitHub webhook** → Triggers agent router when `workflow_state.json` changes
+
+---
+
+## 🔍 Visual Indicators
+
+- **Slack nodes** should show the **Slack logo** (not a globe)
+- **HTTP Request nodes** show a **globe icon** (only in GitHub webhook listener)
+- **Webhook nodes** show a **chain link icon**
 
 Let me know when you've completed each step! 

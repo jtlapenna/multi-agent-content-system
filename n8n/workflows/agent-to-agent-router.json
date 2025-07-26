@@ -19,54 +19,35 @@
       "parameters": {
         "functionCode": "// Parse incoming payload (from GitHub webhook or manual trigger)\nconst payload = $input.first().json;\n\n// Extract data\nitem.site_name = payload.site_name || 'brightgift';\nitem.agent_name = payload.agent_name;\nitem.blog_slug = payload.blog_slug;\nitem.topic = payload.topic || 'general';\nitem.current_phase = payload.current_phase;\n\n// Validate required fields\nif (!item.agent_name || !item.blog_slug || !item.current_phase) {\n  throw new Error('Missing required fields: agent_name, blog_slug, current_phase');\n}\n\n// Channel mapping for BrightGift\nconst siteAgentChannels = {\n  'brightgift': {\n    'SEOAgent': 'C097J4EGEN9', // #brightgift-seo-agent\n    'BlogAgent': 'C0987CMJN1E', // #brightgift-blog-agent\n    'ReviewAgent': 'C097G9YCQT0', // #brightgift-review-agent\n    'ImageAgent': 'C0973KH68EB', // #brightgift-image-agent\n    'PublishingAgent': 'C097J4WA0LD' // #brightgift-publishing-agent\n  }\n};\n\nconst siteChannels = siteAgentChannels[item.site_name];\nif (!siteChannels) {\n  throw new Error(`Site '${item.site_name}' not configured`);\n}\n\nitem.channel_id = siteChannels[item.agent_name];\nif (!item.channel_id) {\n  throw new Error(`Agent '${item.agent_name}' not configured for site '${item.site_name}'`);\n}\n\n// Repository mapping\nconst repoMapping = {\n  'brightgift': 'your-org/brightgift-content-system'\n};\n\nconst repo = repoMapping[item.site_name] || 'your-org/multi-agent-content-system';\n\n// Convert agent name to folder name\nconst agentFolder = item.agent_name.toLowerCase().replace('agent', '');\n\n// Construct Cursor command\nitem.slack_text = `@Cursor [repo=${repo}] review instructions from agents/${agentFolder}/instructions.md and then execute the following task: run ${item.agent_name} for ${item.blog_slug} topic: ${item.topic} phase: ${item.current_phase} site: ${item.site_name}`;\n\nconsole.log(`Routing ${item.agent_name} for ${item.blog_slug} to channel ${item.channel_id}`);\n\nreturn item;"
       },
-      "id": "route-agent",
-      "name": "Route Agent",
+      "id": "prepare-agent-command",
+      "name": "Prepare Agent Command",
       "type": "n8n-nodes-base.function",
       "typeVersion": 1,
       "position": [460, 300]
     },
     {
       "parameters": {
-        "requestMethod": "POST",
-        "url": "https://slack.com/api/chat.postMessage",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Authorization",
-              "value": "Bearer {{ $env.SLACK_BOT_TOKEN }}"
-            },
-            {
-              "name": "Content-Type",
-              "value": "application/json"
-            }
-          ]
-        },
-        "sendBody": true,
-        "bodyParameters": {
-          "parameters": [
-            {
-              "name": "channel",
-              "value": "={{ $json.channel_id }}"
-            },
-            {
-              "name": "text",
-              "value": "={{ $json.slack_text }}"
-            }
-          ]
-        },
-        "options": {}
+        "operation": "postMessage",
+        "channelId": "={{ $json.channel_id }}",
+        "text": "={{ $json.slack_text }}",
+        "otherOptions": {}
       },
       "id": "send-to-agent-channel",
-      "name": "Send to Agent Channel",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.1,
-      "position": [680, 300]
+      "name": "Send to [Channel]",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 1,
+      "position": [680, 300],
+      "credentials": {
+        "slackApi": {
+          "id": "slack-credential",
+          "name": "BrightGift Slack Bot"
+        }
+      }
     },
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "{\n  \"success\": true,\n  \"message\": \"Agent routed successfully\",\n  \"site\": \"{{ $json.site_name }}\",\n  \"agent\": \"{{ $json.agent_name }}\",\n  \"blog_slug\": \"{{ $json.blog_slug }}\",\n  \"phase\": \"{{ $json.current_phase }}\",\n  \"channel_id\": \"{{ $json.channel_id }}\",\n  \"slack_command\": \"{{ $json.slack_text }}\"\n}"
+        "responseBody": "{\n  \"success\": true,\n  \"message\": \"Agent triggered successfully\",\n  \"agent\": \"{{ $json.agent_name }}\",\n  \"site\": \"{{ $json.site_name }}\",\n  \"blog_slug\": \"{{ $json.blog_slug }}\",\n  \"phase\": \"{{ $json.current_phase }}\",\n  \"channel_id\": \"{{ $json.channel_id }}\",\n  \"slack_command\": \"{{ $json.slack_text }}\"\n}"
       },
       "id": "response",
       "name": "Response",
@@ -80,25 +61,25 @@
       "main": [
         [
           {
-            "node": "Route Agent",
+            "node": "Prepare Agent Command",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Route Agent": {
+    "Prepare Agent Command": {
       "main": [
         [
           {
-            "node": "Send to Agent Channel",
+            "node": "Send to [Channel]",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Send to Agent Channel": {
+    "Send to [Channel]": {
       "main": [
         [
           {
@@ -110,7 +91,13 @@
       ]
     }
   },
-  "active": true,
-  "settings": {},
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2024-01-15T10:00:00.000Z",
   "versionId": "1"
 } 

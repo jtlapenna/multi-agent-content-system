@@ -8,8 +8,8 @@
         "responseMode": "responseNode",
         "options": {}
       },
-      "id": "approval-webhook",
-      "name": "Approval Webhook",
+      "id": "publishing-approval-webhook",
+      "name": "Publishing Approval Webhook",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1,
       "position": [240, 300],
@@ -27,41 +27,22 @@
     },
     {
       "parameters": {
-        "requestMethod": "POST",
-        "url": "https://slack.com/api/chat.postMessage",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Authorization",
-              "value": "Bearer {{ $env.SLACK_BOT_TOKEN }}"
-            },
-            {
-              "name": "Content-Type",
-              "value": "application/json"
-            }
-          ]
-        },
-        "sendBody": true,
-        "bodyParameters": {
-          "parameters": [
-            {
-              "name": "channel",
-              "value": "={{ $json.channel_id }}"
-            },
-            {
-              "name": "text",
-              "value": "={{ $json.slack_text }}"
-            }
-          ]
-        },
-        "options": {}
+        "operation": "postMessage",
+        "channelId": "={{ $json.channel_id }}",
+        "text": "={{ $json.slack_text }}",
+        "otherOptions": {}
       },
       "id": "send-to-publishing-channel",
-      "name": "Send to Publishing Channel",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.1,
-      "position": [680, 300]
+      "name": "Send to #brightgift-publishing-agent",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 1,
+      "position": [680, 300],
+      "credentials": {
+        "slackApi": {
+          "id": "slack-credential",
+          "name": "BrightGift Slack Bot"
+        }
+      }
     },
     {
       "parameters": {
@@ -76,7 +57,7 @@
     }
   ],
   "connections": {
-    "Approval Webhook": {
+    "Publishing Approval Webhook": {
       "main": [
         [
           {
@@ -91,14 +72,14 @@
       "main": [
         [
           {
-            "node": "Send to Publishing Channel",
+            "node": "Send to #brightgift-publishing-agent",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Send to Publishing Channel": {
+    "Send to #brightgift-publishing-agent": {
       "main": [
         [
           {
@@ -110,7 +91,13 @@
       ]
     }
   },
-  "active": true,
-  "settings": {},
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 0,
+  "updatedAt": "2024-01-15T10:00:00.000Z",
   "versionId": "1"
 } 
